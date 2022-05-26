@@ -1,0 +1,418 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\GraphicsEngine">
+      <UniqueIdentifier>{135f9fda-b639-4e4e-b611-52658859a3dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\STB">
+      <UniqueIdentifier>{c0b8e5cf-16a3-4ab2-9100-11564ac24935}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math">
+      <UniqueIdentifier>{a7d53bed-83ae-4123-8ce9-6dac7effdc21}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\VectorMath">
+      <UniqueIdentifier>{d24a5850-18dd-4da0-9db9-7aeda98c8380}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\Colors">
+      <UniqueIdentifier>{a42aa40f-3f29-4307-80ce-8a11ea76b951}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine">
+      <UniqueIdentifier>{afe60fde-e5c9-4226-995d-621d64eeb7ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Reflection">
+      <UniqueIdentifier>{6ba2efeb-cb74-4d8b-ba89-742bb19a181a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GraphicsEngine\FileFormats">
+      <UniqueIdentifier>{cd5e2004-ce73-4ac8-a0df-9412d3e6d6ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\AssetManagement">
+      <UniqueIdentifier>{46f1b8cd-b8f4-4d8f-ada5-7c27d2af51b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GraphicsEngine\Core">
+      <UniqueIdentifier>{af03bb16-bd28-4647-aaa1-2b84529a9ec7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GraphicsEngine\Scene">
+      <UniqueIdentifier>{db09fcef-ae22-47ae-a9d5-b04a9f04cdde}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Engine\Objects">
+      <UniqueIdentifier>{68bd445e-6749-4184-9ae2-4f4e766e0893}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Color1.cpp">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Color1I.cpp">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Color2.cpp">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Color2I.cpp">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Color3.cpp">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Color3I.cpp">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Color4.cpp">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Color4I.cpp">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Math\Quaternion.cpp">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Reflection\MetaData.cpp">
+      <Filter>Source Files\Reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Reflection\Reflected.cpp">
+      <Filter>Source Files\Reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\FileFormats\FbxNodes.cpp">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\FileFormats\FbxParser.cpp">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\FileFormats\FbxPropertyHandler.cpp">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\FileFormats\FbxWriter.cpp">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\FileFormats\NifBlockTypes.cpp">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\FileFormats\NifComponentInfo.cpp">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\FileFormats\NifParser.cpp">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\FileFormats\NifWriter.cpp">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\FileFormats\ObjParser.cpp">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\DeviceResource.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\FrameBuffer.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\FrameSwapFences.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\GraphicsContext.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\GraphicsRenderer.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\GraphicsWindow.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\ImageResource.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\Mesh.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\PhongForwardPipeline.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\RenderQueue.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\Shader.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\ShaderPipeline.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\ShaderProgram.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\SwapChain.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\Texture.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\Uniform.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\VulkanErrorHandling.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Scene\MeshAsset.cpp">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Scene\MeshData.cpp">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Scene\Model.cpp">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Scene\Scene.cpp">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Scene\SceneDrawOperation.cpp">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Objects\Object.cpp">
+      <Filter>Source Files\Engine\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Objects\Transform.cpp">
+      <Filter>Source Files\Engine\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Precision.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Assets\Asset.cpp">
+      <Filter>Source Files\Engine\AssetManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Assets\ModelPackageAsset.cpp">
+      <Filter>Source Files\Engine\AssetManagement</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stb_image.h">
+      <Filter>Source Files\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image_write.h">
+      <Filter>Source Files\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_truetype.h">
+      <Filter>Source Files\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Color1.h">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Color1I.h">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Color2.h">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Color2I.h">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Color3.h">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Color3I.h">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Color4.h">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Color4I.h">
+      <Filter>Source Files\Math\Colors</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Matrix3.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Matrix3-decl.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Matrix4.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Matrix4-decl.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Quaternion.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Vector2.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Vector2-decl.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Vector2S.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Vector2S-decl.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Vector3.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Vector3-decl.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Vector3S.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Math\Vector3S-decl.h">
+      <Filter>Source Files\Math\VectorMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Reflection\MetaData.h">
+      <Filter>Source Files\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Reflection\Reflected.h">
+      <Filter>Source Files\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\FbxNodes.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\FbxParser.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\FbxPropertyHandler.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\FbxWriter.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\NifBlockTypes.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\NifComponentInfo.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\NifParser.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\NifWriter.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\ObjParser.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\FileFormats\PackageNodes.h">
+      <Filter>Source Files\GraphicsEngine\FileFormats</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\DeviceResource.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\DrawOperation.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\FrameBuffer.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\FrameSwapFences.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\GraphicsContext.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\GraphicsRenderer.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\GraphicsWindow.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\ImageResource.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\Mesh.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\PhongForwardPipeline.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\RenderQueue.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\Shader.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\ShaderPipeline.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\ShaderProgram.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\SwapChain.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\Texture.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\Uniform.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\VulkanErrorHandling.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\VulkanSupport.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\Camera.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\MeshAsset.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\MeshData.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\Model.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\Scene.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\SceneDrawOperation.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\SceneObject.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Objects\Object.h">
+      <Filter>Source Files\Engine\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Objects\Transform.h">
+      <Filter>Source Files\Engine\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\ObjectAllocator.h">
+      <Filter>Source Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\PageAllocator.h">
+      <Filter>Source Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Precision.h">
+      <Filter>Source Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\IdentifierHeap.h">
+      <Filter>Source Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Assets\Asset.h">
+      <Filter>Source Files\Engine\AssetManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Assets\ModelPackageAsset.h">
+      <Filter>Source Files\Engine\AssetManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Assets\ParserUtils.h">
+      <Filter>Source Files\Engine\AssetManagement</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaderSource\fragment\normalmapconverter.frag" />
+    <None Include="packages.config" />
+  </ItemGroup>
+</Project>
