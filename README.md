@@ -23,6 +23,14 @@ You're also free to modify the source code if you're comfortable with writing C+
 Although please note that the Vulkan graphics engine API is not finalized and may be changed if I update the tool in the future.
 I will also be merging the code in this repo into another code base at some point and this code base will no longer be supported, so the form the tool takes may change too if it is updated.
 
+The Vulkan SDK is a requirement to be able to build and run this project:
+
+https://www.lunarg.com/vulkan-sdk/
+
+https://vulkan-tutorial.com/Development_environment
+
+Please make sure that the Vulkan headers are on your path and can be included. It's also very helpful if glslangValidator.exe is on your path so that you can conveniently compile shaders.
+
 For people familiar with GPU mesh data:
 Nif's vertex attributes are a lot more freeform, but the semantic names will be aliased and converted to something the converter knows how to use. They'll be converted back on export. Nif also allows vertex attributes in a format that is a lot more free form, with multiple attributes per vertex buffer.
 Fbx's vertex attributes are set up to be one attribute per vertex buffer on the other hand.
