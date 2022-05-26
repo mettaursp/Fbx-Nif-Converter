@@ -12,7 +12,7 @@ Running with exportOnly.bat or with the --no-vulkan command line switch will run
 It will report the models as it finds them and provide information about the models inside.
 You should be able to read this output to confirm that it is successfully finding the information you want it to carry over in the conversion.
 It will print out details about the mesh layout by listing out the vertex attributes that the model uses. This information is useful for identifying which mesh features it successfully imported and identified.
-It will also display material information like colors and textures for materials that are packaged with the models.
+It will also display material information like colors and textures for materials that are configured for use with the models.
 
 If you run into issues please report them to me and I'll work on fixing them asap.
 Providing the file that caused the issues along with a description of what went wrong would help a lot too if possible.
