@@ -23,7 +23,7 @@ You're also free to modify the source code if you're comfortable with writing C+
 Although please note that the Vulkan graphics engine API is not finalized and may be changed if I update the tool in the future.
 I will also be merging the code in this repo into another code base at some point and this code base will no longer be supported, so the form the tool takes may change too if it is updated.
 
-The Vulkan SDK is a requirement to be able to build and run this project:
+The Vulkan SDK is a requirement to be able to build and run this project for development purposes:
 
 https://www.lunarg.com/vulkan-sdk/
 
