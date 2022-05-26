@@ -14,7 +14,7 @@ You should be able to read this output to confirm that it is successfully findin
 It will print out details about the mesh layout by listing out the vertex attributes that the model uses. This information is useful for identifying which mesh features it successfully imported and identified.
 It will also display material information like colors and textures for materials that are packaged with the models.
 
-If you run into issues please report them to me and Ifll work on fixing them asap.
+If you run into issues please report them to me and I'll work on fixing them asap.
 Providing the file that caused the issues along with a description of what went wrong would help a lot too if possible.
 
 Please keep in mind that not all features of the Nif and Fbx formats are supported.
