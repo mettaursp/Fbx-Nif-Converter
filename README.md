@@ -32,5 +32,5 @@ https://vulkan-tutorial.com/Development_environment
 Please make sure that the Vulkan headers are on your path and can be included. It's also very helpful if glslangValidator.exe is on your path so that you can conveniently compile shaders.
 
 For people familiar with GPU mesh data:
-Nif's vertex attributes are a lot more freeform, but the semantic names will be aliased and converted to something the converter knows how to use. They'll be converted back on export. Nif also allows vertex attributes in a format that is a lot more free form, with multiple attributes per vertex buffer.
-Fbx's vertex attributes are set up to be one attribute per vertex buffer on the other hand.
+Nif's vertex attributes are a lot more freeform. They can be configured to have multiple attributes per vertex buffer, and can have varying semantic names for the attributes based on how they're used. The semantic names will be aliased and converted to something the converter knows how to use. They'll be converted back on export.
+Fbx's vertex attributes are set up to be one attribute per vertex buffer on the other hand. Fbx doesn't include semantic names or explicit attribute names so the importer will only pick out the ones it knows how to use and use familiar names for them.
