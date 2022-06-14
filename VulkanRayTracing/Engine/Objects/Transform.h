@@ -11,6 +11,7 @@ namespace Engine
 	class Transform : public Object
 	{
 	public:
+		Transform() : Object() {}
 		virtual ~Transform() {}
 
 		void Update(Float delta);
@@ -22,13 +23,12 @@ namespace Engine
 		bool IsTransformStatic() const;
 
 		void SetTransformation(const Matrix4& matrix);
-		const Matrix4& GetTransformation();
+		const Matrix4& GetTransformation() const;
 
 		void SetInheritsTransformation(bool inherits);
 		bool InheritsTransformation() const;
 
 		Vector3 GetPosition() const;
-		Vector3 GetPosition();
 		void SetPosition(const Vector3& position);
 		void Move(const Vector3& offset);
 
@@ -46,27 +46,23 @@ namespace Engine
 		const Matrix4& GetWorldNormalTransformation() ;
 
 		Quaternion GetOrientation() const;
-		Quaternion GetOrientation();
 		void SetOrientation(const Quaternion& orientation);
 		void Rotate(const Quaternion& rotation);
 		void Rotate(const Vector3& axis, float angle);
 
 		Vector3 GetEulerAngles() const;
-		Vector3 GetEulerAngles();
 		void SetEulerAngles(const Vector3& angles);
 		void SetEulerAngles(float pitch, float roll, float yaw);
 		void Rotate(const Vector3& angles);
 		void Rotate(float pitch, float roll, float yaw);
 
 		Vector3 GetEulerAnglesYaw() const;
-		Vector3 GetEulerAnglesYaw();
 		void SetEulerAnglesYaw(const Vector3& angles);
 		void SetEulerAnglesYaw(float yaw, float pitch, float roll);
 		void RotateYaw(const Vector3& angles);
 		void RotateYaw(float yaw, float pitch, float roll);
 
 		Vector3 GetScale() const;
-		Vector3 GetScale();
 		void SetScale(const Vector3& scale);
 		void Rescale(const Vector3& scale);
 
@@ -85,12 +81,17 @@ namespace Engine
 		Matrix4 WorldNormalTransformation;
 
 		bool HasChanged();
-		void Recompute();
+		void Recompute(const Transform* parent);
+		void Regenerate();
+		void MarkStale();
 
 		bool IsStaticTransformation = true;
 		bool InheritTransformation = true;
 		bool Moved = false;
 		bool HadParent = false;
-		Matrix4 OldParentTransform;
+		bool Stale = true;
+		unsigned long long Version = 0;
+		unsigned long long OldParentVersion = (unsigned long long)-1;
+		const Transform* OldParent = nullptr;
 	};
 }

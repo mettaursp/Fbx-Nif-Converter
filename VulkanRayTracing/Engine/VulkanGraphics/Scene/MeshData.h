@@ -6,34 +6,12 @@ import <string>;
 import <map>;
 
 #include <Engine/Objects/Object.h>
+#include <Engine/VulkanGraphics/Core/BufferFormat.h>
 
 namespace Engine
 {
 	namespace Graphics
 	{
-		struct AttributeDataTypeEnum
-		{
-			enum AttributeDataType
-			{
-				Float32,
-				Float64,
-				Bool,
-				Int8,
-				Int16,
-				Int32,
-				Int64,
-				UInt8,
-				UInt16,
-				UInt32,
-				UInt64,
-
-				Count,
-				Unknown
-			};
-		};
-
-		size_t GetDataSize(AttributeDataTypeEnum::AttributeDataType type, size_t elementCount = 1, size_t columnCount = 1);
-
 		struct VertexAttributeFormat
 		{
 			typedef AttributeDataTypeEnum::AttributeDataType AttributeDataType;
@@ -52,23 +30,6 @@ namespace Engine
 			void GetHashString(std::string& hash) const;
 
 			static void GetHashString(std::string& hash, const std::vector<VertexAttributeFormat>& attributes);
-
-			static inline std::string DataTypeNames[AttributeDataType::Unknown + 1] = {
-				"Float32",
-				"Float64",
-				"Bool",
-				"Int8",
-				"Int16",
-				"Int32",
-				"Int64",
-				"UInt8",
-				"UInt16",
-				"UInt32",
-				"UInt64",
-
-				"Count",
-				"Unknown"
-			};
 		};
 
 		class MeshFormat : public Object
@@ -142,9 +103,4 @@ namespace Engine
 			std::vector<int> Indices;
 		};
 	}
-}
-
-namespace Enum
-{
-	typedef Engine::Graphics::AttributeDataTypeEnum::AttributeDataType AttributeDataType;
 }

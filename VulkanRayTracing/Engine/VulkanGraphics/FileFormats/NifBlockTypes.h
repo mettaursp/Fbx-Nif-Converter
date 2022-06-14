@@ -114,14 +114,19 @@ struct CloningBehaviorEnum
 
 typedef CloningBehaviorEnum::CloningBehavior CloningBehavior;
 
+struct NiTransform
+{
+	Vector3SF Translation;
+	Matrix4F Rotation;
+	float Scale = 1;
+};
+
 struct NiNodeType : public NiDataBlock
 {
 	std::vector<const BlockData*> ExtraData;
 	const BlockData* Controller = nullptr;
 	unsigned short Flags = 0;
-	Vector3SF Translation;
-	Matrix4F Rotation;
-	float Scale = 1;
+	NiTransform Transformation;
 	std::vector<const BlockData*> Properties;
 	const BlockData* CollisionObject = nullptr;
 };
@@ -132,6 +137,12 @@ struct NiNode : public NiNodeType
 
 	std::vector<const BlockData*> Children;
 	std::vector<const BlockData*> Effects;
+};
+
+struct NiBounds
+{
+	Vector3SF Center;
+	float Radius = 1;
 };
 
 struct NiMesh : public NiNodeType
@@ -159,8 +170,7 @@ struct NiMesh : public NiNodeType
 	MeshPrimitiveType PrimitiveType;
 	unsigned short NumSubmeshes = 0;
 	bool InstancingEnabled = false;
-	Vector3SF BoundingSphereCenter;
-	float BoundingSphereRadius = 1;
+	NiBounds Bounds;
 	std::vector<DataStreams> Streams;
 	std::vector<const BlockData*> Modifiers;
 };
@@ -196,6 +206,26 @@ struct NiMorphWeightsController : public NiDataBlock
 	unsigned int Count = 0;
 	std::vector<const BlockData*> Interpolators;
 	std::vector<std::string> TargetNames;
+};
+
+struct NiSkinningMeshModifier : public NiDataBlock
+{
+	static inline const std::string BlockTypeName = "NiSkinningMeshModifier";
+
+	struct ElementData
+	{
+		NiMesh::Semantics Semantic;
+		unsigned int NormalizeFlag = 0;
+	};
+
+	std::vector<unsigned short> SubmitPoints;
+	std::vector<unsigned short> CompletePoints;
+	unsigned short Flags = 0;
+	const BlockData* SkeletonRoot = nullptr;
+	NiTransform SkeletonTransformation;
+	std::vector<const BlockData*> Bones;
+	std::vector<NiTransform> BoneTransforms;
+	std::vector<NiBounds> BoneBounds;
 };
 
 struct NiFloatInterpolator : public NiDataBlock
@@ -398,9 +428,12 @@ struct NifDocument
 	void ParseStream(std::istream& stream, BlockData& block);
 	void ParseSourceTexture(std::istream& stream, BlockData& block);
 	void ParseTexturingProperty(std::istream& stream, BlockData& block);
+	void ParseTransform(std::istream& stream, NiTransform& transform, bool translationFirst = true);
+	void ParseBounds(std::istream& stream, NiBounds& bounds);
 	void ParseMesh(std::istream& stream, BlockData& block);
 	void ParseNode(std::istream& stream, BlockData& block);
 	void ParseMaterialProperty(std::istream& stream, BlockData& block);
+	void ParseSkinningMeshModifier(std::istream& stream, BlockData& block);
 
 	void WriteNode(std::ostream& stream, BlockData& block);
 	void WriteMesh(std::ostream& stream, BlockData& block);

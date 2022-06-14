@@ -20,6 +20,34 @@ namespace Engine
 	}
 }
 
+struct FbxVersionEnum
+{
+	enum FbxVersion : int
+	{
+		Geometry = 124,
+		GeometryShape = 100,
+		GeometryNormal = 102,
+		GeometryBinormal = 102,
+		GeometryTangent = 102,
+		GeometryUv = 101,
+		GeometryMaterial = 101,
+		Layer = 100,
+		Model = 232,
+		Pose = 100,
+		DeformerSkin = 101,
+		DeformerCluster = 100,
+		DeformerShape = 100,
+		DeformerShapeChannel = 100,
+		Material = 102,
+		Texture = 202,
+		Templates = 100,
+		Header = 1003,
+		SceneInfo = 100
+	};
+};
+
+typedef FbxVersionEnum::FbxVersion FbxVersion;
+
 const Endian fbxEndian(std::endian::little);
 
 struct NodeProperty
@@ -89,6 +117,7 @@ struct FbxNode
 	size_t Index = 0;
 	size_t Parent = 0;
 	size_t Depth = 0;
+	bool ForceEndMarker = false;
 	std::vector<size_t> ChildIndices;
 	std::vector<FbxNode*> Children;
 
@@ -171,6 +200,12 @@ struct FbxTimeStamp
 	size_t Millisecond = (size_t)-1;
 };
 
+namespace
+{
+	template <typename Type>
+	concept EnumType = std::is_enum_v<Type>;
+}
+
 struct FbxFileStructure
 {
 	bool DebugPrint = false;
@@ -208,6 +243,7 @@ struct FbxFileStructure
 	size_t AddNode(const std::string& name, size_t parent, bool allowNull = false);
 	size_t AddDefinition(const std::string& typeName);
 	size_t AddObject(const std::string& name, size_t parent);
+	size_t AddCategory(const std::string& name);
 
 	void AddConnection(const char* type, long long object1, long long object2, const char* data = nullptr);
 
@@ -227,6 +263,14 @@ struct FbxFileStructure
 	size_t AddProperty(size_t node, const std::string& property)
 	{
 		PropertyHandler<ArrayWrapper<char>>::Add(Node(node), ArrayWrapper<char>{ property.c_str(), property.size() });
+
+		return node;
+	}
+
+	template <EnumType T>
+	size_t AddProperty(size_t node, const T& property)
+	{
+		PropertyHandler<int>::Add(Node(node), property);
 
 		return node;
 	}

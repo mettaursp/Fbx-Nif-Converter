@@ -7,6 +7,7 @@ import <iomanip>;
 #include <Engine/VulkanGraphics/Scene/MeshData.h>
 #include <Engine/Objects/Transform.h>
 #include <Engine/Math/Vector2S.h>
+#include <Engine/Math/Vector3S.h>
 
 void NodeProperty::PushData(std::istream& stream, int length)
 {
@@ -223,24 +224,42 @@ std::ostream& operator<<(std::ostream& out, const NodeProperty& property)
 
 		out << "< ";
 
-		for (unsigned int i = 0; i < property.ArrayLength && i < 4 && ((i + 1) * entryLength - 1) < property.Data.size(); ++i)
+		if (property.ArrayLength == 16 && (typeCode == 'f' || typeCode == 'd'))
 		{
-			if (typeCode == 'f')
-				out << fbxEndian.read<float>(property.Data.data() + i * entryLength);
-			if (typeCode == 'd')
-				out << fbxEndian.read<double>(property.Data.data() + i * entryLength);
-			else if (typeCode == 'l')
-				out << fbxEndian.read<long long>(property.Data.data() + i * entryLength);
-			else if (typeCode == 'i')
-				out << fbxEndian.read<int>(property.Data.data() + i * entryLength);
-			else if (typeCode == 'b')
-				out << fbxEndian.read<unsigned char>(property.Data.data() + i * entryLength);
+			for (unsigned int i = 0; i < 16; ++i)
+			{
+				if (i != 0 && i % 4 == 0)
+					out << " | ";
+				else if (i != 0)
+					out << ", ";
 
-			out << ", ";
+				if (typeCode == 'f')
+					out << fbxEndian.read<float>(property.Data.data() + i * entryLength);
+				if (typeCode == 'd')
+					out << fbxEndian.read<double>(property.Data.data() + i * entryLength);
+			}
 		}
+		else
+		{
+			for (unsigned int i = 0; i < property.ArrayLength && i < 4 && ((i + 1) * entryLength - 1) < property.Data.size(); ++i)
+			{
+				if (typeCode == 'f')
+					out << fbxEndian.read<float>(property.Data.data() + i * entryLength);
+				if (typeCode == 'd')
+					out << fbxEndian.read<double>(property.Data.data() + i * entryLength);
+				else if (typeCode == 'l')
+					out << fbxEndian.read<long long>(property.Data.data() + i * entryLength);
+				else if (typeCode == 'i')
+					out << fbxEndian.read<int>(property.Data.data() + i * entryLength);
+				else if (typeCode == 'b')
+					out << fbxEndian.read<unsigned char>(property.Data.data() + i * entryLength);
 
-		if (property.ArrayLength >= 4)
-			out << "... ";
+				out << ", ";
+			}
+
+			if (property.ArrayLength > 4)
+				out << "... ";
+		}
 
 		out << ">";
 
@@ -386,7 +405,7 @@ void FbxNode::Write(std::ostream& out)
 
 	char nullNode[3 * sizeof(Header.EndOffset) + sizeof(unsigned char)] = {0};
 
-	if (Children.size() > 0)
+	if (Children.size() > 0 || ForceEndMarker)
 		out.write(nullNode, sizeof(nullNode));
 
 	currentPos = (unsigned long long)out.tellp();
@@ -429,7 +448,7 @@ void FbxNode::ComputeEnd(size_t start, std::vector<FbxNode>& nodes)
 		end = Children[i]->Header.EndOffset;
 	}
 
-	if (Children.size() > 0)
+	if (Children.size() > 0 || ForceEndMarker)
 		end += 3 * sizeof(unsigned long long) + sizeof(unsigned char);
 
 	Header.EndOffset = (unsigned long long)end;
@@ -648,6 +667,15 @@ size_t FbxFileStructure::AddObject(const std::string& name, size_t parent)
 	return object;
 }
 
+size_t FbxFileStructure::AddCategory(const std::string& name)
+{
+	size_t category = AddNode(name);
+
+	Nodes[category].ForceEndMarker = true;
+
+	return category;
+}
+
 FbxObjectNode* FbxObjectNode::FindRef(const char* name, const char* type)
 {
 	FbxNode* node = Parent;
@@ -701,12 +729,12 @@ void FbxFileStructure::MakeFileStructure()
 {
 	HeaderExtension = AddNode("FBXHeaderExtension");
 
-	AddProperty(AddNode("FBXHeaderVersion", HeaderExtension), 100);
+	AddProperty(AddNode("FBXHeaderVersion", HeaderExtension), FbxVersion::Header);
 	AddProperty(AddNode("FBXVersion", HeaderExtension), 7700);
 	AddProperty(AddNode("EncryptionType", HeaderExtension), 0);
 	size_t creationTimeStamp = AddNode("CreationTimeStamp", HeaderExtension);
 	{
-		AddProperty(AddNode("Version", creationTimeStamp), 100);
+		AddProperty(AddNode("Version", creationTimeStamp), 1000);
 		TimeStamp.Year = AddProperty(AddNode("Year", creationTimeStamp), 2020);
 		TimeStamp.Month = AddProperty(AddNode("Month", creationTimeStamp), 8);
 		TimeStamp.Day = AddProperty(AddNode("Day", creationTimeStamp), 5);
@@ -721,10 +749,10 @@ void FbxFileStructure::MakeFileStructure()
 	size_t sceneInfo = AddProperties(AddNode("SceneInfo", HeaderExtension), std::string("GlobalInfo\00\01SceneInfo"s), "UserData");
 	{
 		AddProperty(AddNode("Type", sceneInfo), "UserData");
-		AddProperty(AddNode("Version", sceneInfo), 100);
+		AddProperty(AddNode("Version", sceneInfo), FbxVersion::SceneInfo);
 		size_t metaData = AddNode("MetaData", sceneInfo);
 		{
-			AddProperty(AddNode("Version", metaData), 100);
+			AddProperty(AddNode("Version", metaData), FbxVersion::SceneInfo);
 			AddProperty(AddNode("Title", metaData), "");
 			AddProperty(AddNode("Subject", metaData), "");
 			AddProperty(AddNode("Author", metaData), "");
@@ -754,7 +782,7 @@ void FbxFileStructure::MakeFileStructure()
 	AddProperty(AddNode("Creator"), "HornetEngine 2022/5/18");
 	GlobalSettings = AddNode("GlobalSettings");
 	{
-		AddProperty(AddNode("Version", GlobalSettings), 100);
+		AddProperty(AddNode("Version", GlobalSettings), 1000);
 		size_t properties = AddNode("Properties70", GlobalSettings);
 		{
 			AddProperties(AddNode("P", properties), "UpAxis", "int", "Integer", "", 1);
@@ -798,10 +826,10 @@ void FbxFileStructure::MakeFileStructure()
 			AddProperty(AddNode("RootNode", document), 0LL);
 		}
 	}
-	References = AddNode("References");
+	References = AddCategory("References");
 	Definitions = AddNode("Definitions");
 	{
-		AddProperty(AddNode("Version", Definitions), 100);
+		AddProperty(AddNode("Version", Definitions), FbxVersion::Templates);
 		ObjectCount = AddProperty(AddNode("Count", Definitions), 1); // SET COUNT
 		{
 			size_t objectType = AddProperty(AddNode("ObjectType", Definitions), "GlobalSettings");
@@ -1050,7 +1078,7 @@ void FbxFileStructure::MakeFileStructure()
 
 			data.Model = AddProperties(AddObject("Model", Objects), objectId(), node.Name + std::string("\00\01Model"s), attachmentTag);
 			{
-				AddProperty(AddNode("Version", data.Model), 100);
+				AddProperty(AddNode("Version", data.Model), FbxVersion::Model);
 
 				size_t properties = AddNode("Properties70", data.Model);
 
@@ -1059,13 +1087,24 @@ void FbxFileStructure::MakeFileStructure()
 
 				if (!isRoot)
 				{
-					AddProperties(AddNode("P", properties), "Lcl Translation", "Lcl Translation", "", "A", 0.0, 0.0, 0.0);
-					AddProperties(AddNode("P", properties), "Lcl Rotation", "Lcl Rotation", "", "A", 0.0, 0.0, 0.0);
-					AddProperties(AddNode("P", properties), "Lcl Scaling", "Lcl Scaling", "", "A", 1.0, 1.0, 1.0);
+					Matrix4D transformation = node.Transform->GetTransformation();
+					Vector3SD translation = transformation.Translation();
+					Vector3SD scale = transformation.ExtractScale();
+					Matrix4D rotationMatrix;
+					rotationMatrix.ExtractRotation(transformation);
+					Vector3SD rotation = rotationMatrix.ExtractEulerAngles();
+
+					const float pi = 3.14159265359f;
+
+					AddProperties(AddNode("P", properties), "Lcl Translation", "Lcl Translation", "", "A", translation.X, translation.Y, translation.Z);
+					AddProperties(AddNode("P", properties), "Lcl Rotation", "Lcl Rotation", "", "A", rotation.X * 180 / pi, -rotation.Y * 180 / pi, rotation.Z * 180 / pi);
+					AddProperties(AddNode("P", properties), "Lcl Scaling", "Lcl Scaling", "", "A", scale.X, scale.Y, scale.Z);
 				}
 
 				AddProperty<unsigned char>(AddNode("Shading", data.Model), 'Y');
 				AddProperty(AddNode("Culling", data.Model), "CullingOff");
+				AddProperty(AddNode("MultiLayer", data.Model), 0);
+				AddProperty(AddNode("MultiTake", data.Model), 0);
 			}
 
 			AddConnection("OO", (long long)data.Model, isRoot ? 0 : nodes[node.AttachedTo].Model);
@@ -1077,7 +1116,7 @@ void FbxFileStructure::MakeFileStructure()
 
 				const VertexAttributeFormat* morphPose = node.Format->GetAttribute("morphPosition1");
 
-				data.Geometry = AddProperties(AddObject("Geometry", Objects), objectId(), node.Name + "\00\01Geometry"s, "Mesh");
+				data.Geometry = AddProperties(AddObject("Geometry", Objects), objectId(), node.Name + "_mesh\00\01Geometry"s, "Mesh");
 				{
 					if (morphPose != nullptr)
 					{
@@ -1115,9 +1154,9 @@ void FbxFileStructure::MakeFileStructure()
 						materialBuffer[i] = 0;
 
 					AddProperty(AddNode("PolygonVertexIndex", data.Geometry), ArrayWrapper<int>{indexBuffer.data(), indexBuffer.size(), true });
-					AddProperty(AddNode("GeometryVersion", data.Geometry), 100);
+					AddProperty(AddNode("GeometryVersion", data.Geometry), FbxVersion::Geometry);
 
-					auto addAttribute = [this, &wAxisBuffer, &node, &format, data, vertexBuffers, i, vertexCount](const char* attributeName, const char* nodeName, size_t elementCount, const char* bufferNodeName, const char* elementName, const char* bufferWNodeName = nullptr)
+					auto addAttribute = [this, &wAxisBuffer, &node, &format, data, vertexBuffers, i, vertexCount](int version, const char* attributeName, const char* nodeName, size_t elementCount, const char* bufferNodeName, const char* elementName, const char* bufferWNodeName = nullptr)
 					{
 						const VertexAttributeFormat* attribute = node.Format->GetAttribute(attributeName);
 						const VertexAttributeFormat* stagingAttribute = format->GetAttribute(attributeName);
@@ -1136,7 +1175,7 @@ void FbxFileStructure::MakeFileStructure()
 
 							size_t element = AddProperty(AddNode(nodeName, data.Geometry), 0);
 
-							AddProperty(AddNode("Version", element), 100);
+							AddProperty(AddNode("Version", element), version);
 							AddProperty(AddNode("Name", element), elementName);
 							AddProperty(AddNode("MappingInformationType", element), "ByVertice");
 							AddProperty(AddNode("ReferenceInformationType", element), "Direct");
@@ -1147,14 +1186,14 @@ void FbxFileStructure::MakeFileStructure()
 						}
 					};
 
-					addAttribute("normal", "LayerElementNormal", 3, "Normals", "", "NormalsW");
-					addAttribute("binormal", "LayerElementBinormal", 3, "Binormals", "", "BinormalsW");
-					addAttribute("tangent", "LayerElementTangent", 3, "Tangents", "", "TangentsW");
-					addAttribute("textureCoords", "LayerElementUV", 2, "UV", "DiffuseUV");
+					addAttribute(FbxVersion::GeometryNormal, "normal", "LayerElementNormal", 3, "Normals", "", "NormalsW");
+					addAttribute(FbxVersion::GeometryBinormal, "binormal", "LayerElementBinormal", 3, "Binormals", "", "BinormalsW");
+					addAttribute(FbxVersion::GeometryTangent, "tangent", "LayerElementTangent", 3, "Tangents", "", "TangentsW");
+					addAttribute(FbxVersion::GeometryUv, "textureCoords", "LayerElementUV", 2, "UV", "DiffuseUV");
 
 					size_t element = AddProperty(AddNode("LayerElementMaterial", data.Geometry), 0);
 
-					AddProperty(AddNode("Version", element), 100);
+					AddProperty(AddNode("Version", element), FbxVersion::GeometryMaterial);
 					AddProperty(AddNode("Name", element), "");
 					AddProperty(AddNode("MappingInformationType", element), "ByPolygon");
 					AddProperty(AddNode("ReferenceInformationType", element), "IndexToDirect");
@@ -1162,7 +1201,7 @@ void FbxFileStructure::MakeFileStructure()
 
 					size_t layer = AddProperty(AddNode("Layer", data.Geometry), 0);
 
-					AddProperty(AddNode("Version", layer), 100);
+					AddProperty(AddNode("Version", layer), FbxVersion::Layer);
 
 					auto addLayerElement = [this, &node, layer, i](const char* attributeName, const char* nodeName)
 					{
@@ -1191,15 +1230,31 @@ void FbxFileStructure::MakeFileStructure()
 
 				data.MeshModel = AddProperties(AddObject("Model", Objects), objectId(), node.Name + "\00\01Model"s, "Mesh");
 				{
-					AddProperty(AddNode("Version", data.MeshModel), 100);
+					AddProperty(AddNode("Version", data.MeshModel), FbxVersion::Model);
 
 					size_t properties = AddNode("Properties70", data.MeshModel);
+					{
+						AddProperties(AddNode("P", properties), "ScalingMax", "Vector3D", "Vector", "", 0.0, 0.0, 0.0);
+						AddProperties(AddNode("P", properties), "DefaultAttributeIndex", "int", "Integer", "", 0);
 
-					AddProperties(AddNode("P", properties), "ScalingMax", "Vector3D", "Vector", "", 0.0, 0.0, 0.0);
-					AddProperties(AddNode("P", properties), "DefaultAttributeIndex", "int", "Integer", "", 0);
+						Matrix4D transformation = node.Transform->GetWorldTransformation();
+						Vector3SD translation = transformation.Translation();
+						Vector3SD scale = transformation.ExtractScale();
+						Matrix4D rotationMatrix;
+						rotationMatrix.ExtractRotation(transformation);
+						Vector3SD rotation = rotationMatrix.ExtractEulerAngles();
+
+						const float pi = 3.14159265359f;
+
+						AddProperties(AddNode("P", properties), "Lcl Translation", "Lcl Translation", "", "A", translation.X, translation.Y, translation.Z);
+						AddProperties(AddNode("P", properties), "Lcl Rotation", "Lcl Rotation", "", "A", rotation.X * 180 / pi, -rotation.Y * 180 / pi, rotation.Z * 180 / pi);
+						AddProperties(AddNode("P", properties), "Lcl Scaling", "Lcl Scaling", "", "A", scale.X, scale.Y, scale.Z);
+					}
 
 					AddProperty<unsigned char>(AddNode("Shading", data.MeshModel), 'Y');
 					AddProperty(AddNode("Culling", data.MeshModel), "CullingOff");
+					AddProperty(AddNode("MultiLayer", data.Model), 0);
+					AddProperty(AddNode("MultiTake", data.Model), 0);
 				}
 
 				AddConnection("OO", (long long)data.MeshModel, 0);
@@ -1208,7 +1263,7 @@ void FbxFileStructure::MakeFileStructure()
 				data.Pose = AddProperties(AddObject("Pose", Objects), objectId(), node.Name + "\00\01Pose"s, "BindPose");
 				{
 					AddProperty(AddNode("Type", data.Pose), "BindPose");
-					AddProperty(AddNode("Version", data.Pose), 100);
+					AddProperty(AddNode("Version", data.Pose), FbxVersion::Pose);
 
 					Matrix4D identity;
 
@@ -1223,7 +1278,7 @@ void FbxFileStructure::MakeFileStructure()
 					{
 						size_t current = parentTree[parentTree.size() - 1 - j];
 
-						Matrix4D transformation = Package->Nodes[current].Transform->GetTransformation();
+						Matrix4D transformation = Package->Nodes[current].Transform->GetWorldTransformation();
 
 						size_t poseNode = AddNode("PoseNode", data.Pose);
 						AddProperty(AddNode("Node", poseNode), (long long)nodes[current].Model);
@@ -1239,7 +1294,7 @@ void FbxFileStructure::MakeFileStructure()
 
 				data.Deformer = AddProperties(AddObject("Deformer", Objects), objectId(), std::string("\00\01Deformer"s), "Skin");
 				{
-					AddProperty(AddNode("Version", data.Deformer), 100);
+					AddProperty(AddNode("Version", data.Deformer), FbxVersion::DeformerSkin);
 					AddProperty(AddNode("Link_DeformAcuracy", data.Deformer), 50.0);
 				}
 
@@ -1247,7 +1302,7 @@ void FbxFileStructure::MakeFileStructure()
 
 				size_t meshSubdeformer = AddProperties(AddObject("Deformer", Objects), objectId(), std::string("\00\01SubDeformer"s), "Cluster");
 				{
-					AddProperty(AddNode("Version", meshSubdeformer), 100);
+					AddProperty(AddNode("Version", meshSubdeformer), FbxVersion::DeformerCluster);
 					AddProperties(AddNode("UserData", meshSubdeformer), "", "");
 
 					std::vector<int> indices(vertexCount);
@@ -1259,12 +1314,14 @@ void FbxFileStructure::MakeFileStructure()
 						weights[i] = 1;
 					}
 
-					Matrix4D transformation = node.Transform->GetTransformation();
+					Matrix4D transformation = node.Transform->GetWorldTransformation();
+					Matrix4D transformationInverse = transformation.Inverted();
+					Matrix4D identity;
 
 					AddProperty(AddNode("Indexes", meshSubdeformer), ArrayWrapper<int>{indices.data(), vertexCount, true });
 					AddProperty(AddNode("Weights", meshSubdeformer), ArrayWrapper<double>{weights.data(), vertexCount, true });
-					AddProperty(AddNode("Transform", meshSubdeformer), ArrayWrapper<double>{ &transformation.Data[0][0], 16 });
-					AddProperty(AddNode("TransformLink", meshSubdeformer), ArrayWrapper<double>{ &transformation.Data[0][0], 16 });
+					AddProperty(AddNode("Transform", meshSubdeformer), ArrayWrapper<double>{ &identity.Data[0][0], 16 });
+					AddProperty(AddNode("TransformLink", meshSubdeformer), ArrayWrapper<double>{ &identity.Data[0][0], 16 });
 				}
 
 				AddConnection("OO", (long long)meshSubdeformer, (long long)data.Deformer);
@@ -1276,11 +1333,12 @@ void FbxFileStructure::MakeFileStructure()
 
 					size_t subdeformer = AddProperties(AddObject("Deformer", Objects), objectId(), std::string("\00\01SubDeformer"s), "Cluster");
 					{
-						Matrix4D transformation = parentNode.Transform->GetTransformation();
+						Matrix4D transformation = parentNode.Transform->GetWorldTransformation();
+						Matrix4D transformationInverse = transformation.Inverted();
 
-						AddProperty(AddNode("Version", subdeformer), 100);
+						AddProperty(AddNode("Version", subdeformer), FbxVersion::DeformerCluster);
 						AddProperties(AddNode("UserData", subdeformer), "", "");
-						AddProperty(AddNode("Transform", subdeformer), ArrayWrapper<double>{ &transformation.Data[0][0], 16 });
+						AddProperty(AddNode("Transform", subdeformer), ArrayWrapper<double>{ &transformationInverse.Data[0][0], 16 });
 						AddProperty(AddNode("TransformLink", subdeformer), ArrayWrapper<double>{ &transformation.Data[0][0], 16 });
 					}
 
@@ -1292,7 +1350,7 @@ void FbxFileStructure::MakeFileStructure()
 				{
 					data.ShapeKey = AddProperties(AddObject("Geometry", Objects), objectId(), "Key 1\00\01Geometry"s, "Shape");
 					{
-						AddProperty(AddNode("Version", data.ShapeKey), 100);
+						AddProperty(AddNode("Version", data.ShapeKey), FbxVersion::GeometryShape);
 
 						keyStagingData->ResetData();
 						keyStagingData->PushVertices(vertexCount, false);
@@ -1330,12 +1388,12 @@ void FbxFileStructure::MakeFileStructure()
 
 					size_t shapeKeyDeformer = AddProperties(AddObject("Deformer", Objects), objectId(), node.Name + std::string("\00\01Deformer"s), "BlendShape");
 					{
-						AddProperty(AddNode("Version", shapeKeyDeformer), 100);
+						AddProperty(AddNode("Version", shapeKeyDeformer), FbxVersion::DeformerShape);
 					}
 
 					size_t shapeKeySubdeformer = AddProperties(AddObject("Deformer", Objects), objectId(), std::string("Key 1\00\01SubDeformer"s), "BlendShapeChannel");
 					{
-						AddProperty(AddNode("Version", shapeKeySubdeformer), 100);
+						AddProperty(AddNode("Version", shapeKeySubdeformer), FbxVersion::DeformerShapeChannel);
 						AddProperty(AddNode("DeformPercent", shapeKeySubdeformer), 0.0);
 
 						shapeKeyStagingData.resize(vertexCount);
@@ -1359,7 +1417,7 @@ void FbxFileStructure::MakeFileStructure()
 
 			size_t material = AddProperties(AddObject("Material", Objects), objectId(), Package->Materials[i].Name + "\00\01Material"s, "");
 			{
-				AddProperty(AddNode("Version", material), 100);
+				AddProperty(AddNode("Version", material), FbxVersion::Material);
 				AddProperty(AddNode("ShadingModel", material), "phong");
 				AddProperty(AddNode("MultiLayer", material), 0);
 
@@ -1423,7 +1481,7 @@ void FbxFileStructure::MakeFileStructure()
 			size_t diffuseTexture = AddProperties(AddObject("Texture", Objects), objectId(), std::string("Diffuse Texture\00\01Texture"s), "");
 			{
 				AddProperty(AddNode("Type", diffuseTexture), "TextureVideoClip");
-				AddProperty(AddNode("Version", diffuseTexture), 100);
+				AddProperty(AddNode("Version", diffuseTexture), FbxVersion::Texture);
 				AddProperty(AddNode("TextureName", diffuseTexture), std::string("Diffuse Texture\00\01Texture"s));
 
 				size_t properties = AddNode("Properties70", diffuseTexture);
@@ -1443,7 +1501,7 @@ void FbxFileStructure::MakeFileStructure()
 			size_t normalTexture = AddProperties(AddObject("Texture", Objects), objectId(), std::string("Normal Texture\00\01Texture"s), "");
 			{
 				AddProperty(AddNode("Type", normalTexture), "TextureVideoClip");
-				AddProperty(AddNode("Version", normalTexture), 100);
+				AddProperty(AddNode("Version", normalTexture), FbxVersion::Texture);
 				AddProperty(AddNode("TextureName", normalTexture), std::string("Normal Texture\00\01Texture"s));
 
 				size_t properties = AddNode("Properties70", normalTexture);
@@ -1463,7 +1521,7 @@ void FbxFileStructure::MakeFileStructure()
 			size_t specularTexture = AddProperties(AddObject("Texture", Objects), objectId(), std::string("Specular Texture\00\01Texture"s), "");
 			{
 				AddProperty(AddNode("Type", specularTexture), "TextureVideoClip");
-				AddProperty(AddNode("Version", specularTexture), 100);
+				AddProperty(AddNode("Version", specularTexture), FbxVersion::Texture);
 				AddProperty(AddNode("TextureName", specularTexture), std::string("Specular Texture\00\01Texture"s));
 
 				size_t properties = AddNode("Properties70", specularTexture);
@@ -1514,6 +1572,7 @@ void FbxFileStructure::FinalizeNodes()
 	for (size_t i = 0; i < RootNode.ChildIndices.size(); ++i)
 	{
 		Nodes[RootNode.ChildIndices[i]].ComputeEnd(end, Nodes);
+
 		end = Nodes[RootNode.ChildIndices[i]].Header.EndOffset;
 	}
 	//for (size_t i = 0; i < Nodes.size(); ++i)

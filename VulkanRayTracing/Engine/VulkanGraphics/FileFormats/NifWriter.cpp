@@ -83,15 +83,15 @@ void NifWriter::Write(std::ostream& stream)
 			nodeTypeData = nodeData;
 		}
 
-		nodeTypeData->Translation = node.Transform->GetTransformation().Translation();
-		nodeTypeData->Rotation.ExtractRotation(node.Transform->GetTransformation());
+		nodeTypeData->Transformation.Translation = node.Transform->GetTransformation().Translation();
+		nodeTypeData->Transformation.Rotation.ExtractRotation(node.Transform->GetTransformation());
 
 		Vector3SF scale = node.Transform->GetTransformation().ExtractScale();
 
 		if (!(compare(scale.X, scale.Y) && compare(scale.Y, scale.Z)))
 			std::cout << "warning: nonuniform scaling used in package exported to nif: " << node.Name << " " << scale << std::endl;
 
-		nodeTypeData->Scale = std::max(std::max(scale.X, scale.Y), scale.Z);
+		nodeTypeData->Transformation.Scale = std::max(std::max(scale.X, scale.Y), scale.Z);
 
 		if (node.AttachedTo == (size_t)-1)
 		{
@@ -523,9 +523,9 @@ void NifDocument::WriteNode(std::ostream& stream, BlockData& block)
 
 	WriteRef(stream, data->Controller);
 	write(stream, data->Flags);
-	write(stream, data->Translation);
-	WriteMatrix(stream, data->Rotation);
-	write(stream, data->Scale);
+	write(stream, data->Transformation.Translation);
+	WriteMatrix(stream, data->Transformation.Rotation);
+	write(stream, data->Transformation.Scale);
 	write(stream, (unsigned int)data->Properties.size());
 	
 	for (size_t i = 0; i < data->Properties.size(); ++i)
@@ -558,9 +558,9 @@ void NifDocument::WriteMesh(std::ostream& stream, BlockData& block)
 
 	WriteRef(stream, data->Controller);
 	write(stream, data->Flags);
-	write(stream, data->Translation);
-	WriteMatrix(stream, data->Rotation);
-	write(stream, data->Scale);
+	write(stream, data->Transformation.Translation);
+	WriteMatrix(stream, data->Transformation.Rotation);
+	write(stream, data->Transformation.Scale);
 	write(stream, (unsigned int)data->Properties.size());
 
 	for (size_t i = 0; i < data->Properties.size(); ++i)
@@ -581,8 +581,8 @@ void NifDocument::WriteMesh(std::ostream& stream, BlockData& block)
 	write(stream, (unsigned int)data->PrimitiveType);
 	write(stream, data->NumSubmeshes);
 	write(stream, (unsigned char)data->InstancingEnabled);
-	write(stream, data->BoundingSphereCenter);
-	write(stream, data->BoundingSphereRadius);
+	write(stream, data->Bounds.Center);
+	write(stream, data->Bounds.Radius);
 
 	write(stream, (unsigned int)data->Streams.size());
 

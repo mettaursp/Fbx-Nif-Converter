@@ -589,6 +589,10 @@ void FbxParser::Parse(std::istream& stream)
 		}
 	}
 
+	for (size_t i = 0; i < Package->Nodes.size(); ++i)
+		if (Package->Nodes[i].AttachedTo != (size_t)-1)
+			Package->Nodes[i].Transform->SetParent(Package->Nodes[Package->Nodes[i].AttachedTo].Transform);
+
 	for (auto index : fbxFile.FbxObjectNodes)
 	{
 		FbxNode* node = index.second;

@@ -15,28 +15,18 @@ import <set>;
 #include "NifComponentInfo.h"
 #include "NifBlockTypes.h"
 
-void NifDocument::ParseNode(std::istream& stream, BlockData& block)
+void NifDocument::ParseTransform(std::istream& stream, NiTransform& transform, bool translationFirst)
 {
-	NiNode* data = block.AddData<NiNode>();
+	if (translationFirst)
+	{
+		transform.Translation = Vector3SF(
+			Endian.read<float>(stream),
+			Endian.read<float>(stream),
+			Endian.read<float>(stream)
+		);
+	}
 
-	unsigned int numExtraData = Endian.read<unsigned int>(stream);
-
-	data->ExtraData.resize(numExtraData);
-
-	for (unsigned int i = 0; i < numExtraData; ++i)
-		data->ExtraData[i] = &Blocks[Endian.read<unsigned int>(stream)];
-
-	data->Controller = FetchRef(stream);
-	data->Flags = Endian.read<unsigned short>(stream);
-	data->Translation = Vector3SF(
-		Endian.read<float>(stream),
-		Endian.read<float>(stream),
-		Endian.read<float>(stream)
-	);
-
-	std::swap(data->Translation.X, data->Translation.Z);
-	
-	data->Rotation = Matrix4F(
+	transform.Rotation = Matrix4F(
 		Vector3F(),
 		Vector3F(
 			Endian.read<float>(stream),
@@ -54,7 +44,48 @@ void NifDocument::ParseNode(std::istream& stream, BlockData& block)
 			Endian.read<float>(stream)
 		)
 	);
-	data->Scale = Endian.read<float>(stream);
+
+	if (!translationFirst)
+	{
+		transform.Translation = Vector3SF(
+			Endian.read<float>(stream),
+			Endian.read<float>(stream),
+			Endian.read<float>(stream)
+		);
+	}
+
+	std::swap(transform.Translation.X, transform.Translation.Z);
+
+	transform.Scale = Endian.read<float>(stream);
+}
+
+void NifDocument::ParseBounds(std::istream& stream, NiBounds& bounds)
+{
+	bounds.Center = Vector3SF(
+		Endian.read<float>(stream),
+		Endian.read<float>(stream),
+		Endian.read<float>(stream)
+	);
+	bounds.Radius = Endian.read<float>(stream);
+
+	std::swap(bounds.Center.X, bounds.Center.Z);
+}
+
+void NifDocument::ParseNode(std::istream& stream, BlockData& block)
+{
+	NiNode* data = block.AddData<NiNode>();
+
+	unsigned int numExtraData = Endian.read<unsigned int>(stream);
+
+	data->ExtraData.resize(numExtraData);
+
+	for (unsigned int i = 0; i < numExtraData; ++i)
+		data->ExtraData[i] = &Blocks[Endian.read<unsigned int>(stream)];
+
+	data->Controller = FetchRef(stream);
+	data->Flags = Endian.read<unsigned short>(stream);
+	
+	ParseTransform(stream, data->Transformation);
 
 	unsigned int numProperties = Endian.read<unsigned int>(stream);
 
@@ -98,30 +129,8 @@ void NifDocument::ParseMesh(std::istream& stream, BlockData& block)
 
 	data->Controller = FetchRef(stream);
 	data->Flags = Endian.read<unsigned short>(stream);
-	data->Translation = Vector3SF(
-		Endian.read<float>(stream),
-		Endian.read<float>(stream),
-		Endian.read<float>(stream)
-	);
-	data->Rotation = Matrix4F(
-		Vector3F(),
-		Vector3F(
-			Endian.read<float>(stream),
-			Endian.read<float>(stream),
-			Endian.read<float>(stream)
-		),
-		Vector3F(
-			Endian.read<float>(stream),
-			Endian.read<float>(stream),
-			Endian.read<float>(stream)
-		),
-		Vector3F(
-			Endian.read<float>(stream),
-			Endian.read<float>(stream),
-			Endian.read<float>(stream)
-		)
-	);
-	data->Scale = Endian.read<float>(stream);
+
+	ParseTransform(stream, data->Transformation);
 
 	unsigned int numProperties = Endian.read<unsigned int>(stream);
 
@@ -148,12 +157,8 @@ void NifDocument::ParseMesh(std::istream& stream, BlockData& block)
 	data->PrimitiveType = (MeshPrimitiveType)Endian.read<unsigned int>(stream);
 	data->NumSubmeshes = Endian.read<unsigned short>(stream);
 	data->InstancingEnabled = Endian.read<char>(stream);
-	data->BoundingSphereCenter = Vector3SF(
-		Endian.read<float>(stream),
-		Endian.read<float>(stream),
-		Endian.read<float>(stream)
-	);
-	data->BoundingSphereRadius = Endian.read<float>(stream);
+
+	ParseBounds(stream, data->Bounds);
 
 	unsigned int numDataStreams = Endian.read<unsigned int>(stream);
 
@@ -328,6 +333,45 @@ void NifDocument::ParseMaterialProperty(std::istream& stream, BlockData& block)
 	data->Alpha = Endian.read<float>(stream);
 }
 
+void NifDocument::ParseSkinningMeshModifier(std::istream& stream, BlockData& block)
+{
+	NiSkinningMeshModifier* data = block.AddData<NiSkinningMeshModifier>();
+
+	unsigned int numSubmitPoints = Endian.read<unsigned int>(stream);
+
+	for (unsigned int i = 0; i < numSubmitPoints; ++i)
+		data->SubmitPoints.push_back(Endian.read<unsigned short>(stream));
+
+	unsigned int numCompletePoints = Endian.read<unsigned int>(stream);
+
+	for (unsigned int i = 0; i < numCompletePoints; ++i)
+		data->CompletePoints.push_back(Endian.read<unsigned short>(stream));
+
+	data->Flags = Endian.read<unsigned short>(stream);
+	data->SkeletonRoot = FetchRef(stream);
+
+	ParseTransform(stream, data->SkeletonTransformation, false);
+
+	unsigned int numBones = Endian.read<unsigned int>(stream);
+
+	for (unsigned int i = 0; i < numBones; ++i)
+		data->Bones.push_back(FetchRef(stream));
+
+	for (unsigned int i = 0; i < numBones; ++i)
+	{
+		data->BoneTransforms.push_back(NiTransform{});
+
+		ParseTransform(stream, data->BoneTransforms.back(), false);
+	}
+
+	for (unsigned int i = 0; i < numBones; ++i)
+	{
+		data->BoneBounds.push_back(NiBounds{});
+
+		ParseBounds(stream, data->BoneBounds.back());
+	}
+}
+
 void NifDocument::ParserNoOp(std::istream& stream, BlockData& block)
 {
 	char buffer[0xFFF];
@@ -349,10 +393,11 @@ std::map<std::string, NifDocument::BlockParseFunction> parserFunctions = {
 	{ "NiSourceTexture", &NifDocument::ParseSourceTexture },
 	{ "NiDataStream", &NifDocument::ParseStream },
 	{ "NiMaterialProperty", &NifDocument::ParseMaterialProperty },
+	{ "NiSkinningMeshModifier", &NifDocument::ParseSkinningMeshModifier },
 };
 
 std::set<std::string> ignoreBlockName = {
-	"NiFloatInterpolator", "NiFloatData", "NiDataStream", "NiTextureTransformController"
+	"NiFloatInterpolator", "NiFloatData", "NiDataStream", "NiTextureTransformController", "NiTransformController", "NiTransformInterpolator", "NiSkinningMeshModifier"
 };
 
 std::map<std::string, std::string> attributeAliases = {
@@ -464,27 +509,26 @@ void NifParser::Parse(std::istream& stream)
 
 		if (block.BlockSize > 0)
 		{
-			auto iterator = ignoreBlockName.find(typeName);
+			auto parserIterator = parserFunctions.find(typeName);
 
-			if (iterator == ignoreBlockName.end())
-			{
-				unsigned int name = endian.read<unsigned int>(stream);
-
-				if (name != 0xFFFFFFFFu)
-					block.BlockName = document.Strings[name];
-
-				block.BlockStart = 4;
-			}
-		}
-
-		if (block.BlockSize - block.BlockStart > 0)
-		{
-			auto iterator = parserFunctions.find(typeName);
-
-			if (iterator == parserFunctions.end())
+			if (parserIterator == parserFunctions.end())
 				document.ParserNoOp(stream, block);
 			else
-				(document.*(iterator->second))(stream, block);
+			{
+				auto iterator = ignoreBlockName.find(typeName);
+
+				if (iterator == ignoreBlockName.end())
+				{
+					unsigned int name = endian.read<unsigned int>(stream);
+
+					if (name != 0xFFFFFFFFu)
+						block.BlockName = document.Strings[name];
+
+					block.BlockStart = 4;
+				}
+
+				(document.*(parserIterator->second))(stream, block);
+			}
 		}
 
 		unsigned int parsedInBlock = (unsigned int)stream.tellg() - position;
@@ -521,8 +565,12 @@ void NifParser::Parse(std::istream& stream)
 				parentEntries[childBlock] = Package->Nodes.size();
 			}
 
+			NiTransform& nodeTransform = data->Transformation;
+
 			std::shared_ptr<Engine::Transform> transform = Engine::Create<Engine::Transform>();
-			transform->SetTransformation(Matrix4F(data->Translation) * data->Rotation * Matrix4F::NewScale(data->Scale, data->Scale, data->Scale));
+			transform->SetTransformation(Matrix4F(nodeTransform.Translation) * nodeTransform.Rotation * Matrix4F::NewScale(nodeTransform.Scale, nodeTransform.Scale, nodeTransform.Scale));
+			transform->SetInheritsTransformation((data->Flags & 0x4) != 0);
+			transform->Name = block.BlockName;
 
 			Package->Nodes.push_back(ModelPackageNode{ block.BlockName, parentIndex, (size_t)-1, nullptr, nullptr, transform });
 		}
@@ -631,8 +679,12 @@ void NifParser::Parse(std::istream& stream)
 				++binding;
 			}
 
+			NiTransform& nodeTransform = data->Transformation;
+
 			std::shared_ptr<Engine::Transform> transform = Engine::Create<Engine::Transform>();
-			transform->SetTransformation(Matrix4F(data->Translation) * data->Rotation * Matrix4F::NewScale(data->Scale, data->Scale, data->Scale));
+			transform->SetTransformation(Matrix4F(nodeTransform.Translation) * nodeTransform.Rotation * Matrix4F::NewScale(nodeTransform.Scale, nodeTransform.Scale, nodeTransform.Scale));
+			transform->SetInheritsTransformation((data->Flags & 0x4) != 0);
+			transform->Name = block.BlockName;
 
 			ImportedNiMesh mesh;
 
@@ -704,4 +756,8 @@ void NifParser::Parse(std::istream& stream)
 			}
 		}
 	}
+
+	for (size_t i = 0; i < Package->Nodes.size(); ++i)
+		if (Package->Nodes[i].AttachedTo != (size_t)-1)
+			Package->Nodes[i].Transform->SetParent(Package->Nodes[Package->Nodes[i].AttachedTo].Transform);
 }

@@ -3,6 +3,7 @@
 #include "SwapChain.h"
 #include "ShaderPipeline.h"
 #include "DrawOperation.h"
+#include "RenderTarget.h"
 
 namespace Engine
 {
@@ -32,9 +33,21 @@ namespace Engine
 			BoundPipeline = shaderPipeline;
 		}
 
-		void ShaderProgram::SetOutput(const std::shared_ptr<FrameBuffer>& output)
+		void ShaderProgram::SetOutput(const std::shared_ptr<RenderTarget>& output)
 		{
+			if (OutputFormat == nullptr)
+				throw "output format not set";
 
+			if (output->GetFormat() != OutputFormat)
+				throw "render target format doesn't match";
+		}
+
+		void ShaderProgram::SetOutputFormat(const std::shared_ptr<BufferFormat>& outputFormat)
+		{
+			if (OutputFormat != nullptr)
+				throw "already set output format";
+
+			OutputFormat = outputFormat;
 		}
 
 		void ShaderProgram::Reset()

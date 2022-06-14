@@ -76,7 +76,7 @@ namespace Engine
 	{
 		for (int i = 0; i < GetChildren(); ++i)
 		{
-			if (Children[i] != nullptr && Children[i]->DoesTick())
+			if (Children[i] != nullptr)// && Children[i]->DoesTick())
 				Children[i]->Update(delta);
 			else if (Children[i] == nullptr)
 				throw "bad child detected";

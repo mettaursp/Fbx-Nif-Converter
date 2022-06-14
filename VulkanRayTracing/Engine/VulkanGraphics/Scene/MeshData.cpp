@@ -4,25 +4,6 @@ namespace Engine
 {
 	namespace Graphics
 	{
-		const size_t TypeSizes[Enum::AttributeDataType::Count] = {
-			4, //Float32
-			8, //Float64
-			1, //Bool
-			1, //Int8
-			2, //Int16
-			4, //Int32
-			8, //Int64
-			1, //UInt8
-			2, //UInt16
-			4, //UInt32
-			8 //UInt64
-		};
-
-		size_t GetDataSize(AttributeDataTypeEnum::AttributeDataType type, size_t elementCount, size_t columnCount)
-		{
-			return TypeSizes[type] * elementCount * columnCount;
-		}
-
 		typedef void(*CopyFunction)(const void* source, void* destination);
 
 		template <typename SourceType, typename DestinationType>
@@ -95,7 +76,7 @@ namespace Engine
 
 		size_t VertexAttributeFormat::GetElementSize() const
 		{
-			return TypeSizes[Type];
+			return GetDataSize(Type);
 		}
 
 		size_t VertexAttributeFormat::GetSize() const
@@ -109,7 +90,7 @@ namespace Engine
 			char* destinationChar = reinterpret_cast<char*>(destination);
 
 			for (size_t i = 0; i < ElementCount; ++i)
-				TransferOperations.Operations[Type][destinationType](sourceChar + (i * GetElementSize()), destinationChar + (i * TypeSizes[destinationType]));
+				TransferOperations.Operations[Type][destinationType](sourceChar + (i * GetElementSize()), destinationChar + (i * GetDataSize(destinationType)));
 		}
 
 		void VertexAttributeFormat::GetHashString(std::string& hash) const

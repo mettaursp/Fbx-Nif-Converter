@@ -11,6 +11,24 @@ contains declaration of Matrix class
 #include "Vector3-decl.h"
 #include "../Precision.h"
 
+struct EulerAnglesOrderEnum
+{
+	enum EulerAnglesOrder
+	{
+		PitchYawRoll,
+		PitchRollYaw,
+		YawPitchRoll,
+		YawRollPitch,
+		RollPitchYaw,
+		RollYawPitch
+	};
+};
+
+namespace Enum
+{
+	typedef EulerAnglesOrderEnum::EulerAnglesOrder EulerAnglesOrder;
+}
+
 template <typename Number>
 class Matrix3Type;
 
@@ -70,6 +88,7 @@ public:
 	Vec3 FrontVector() const;
 	Vec3 Translation() const;
 	Vec3 ExtractScale() const;
+	Vec3 ExtractEulerAngles(Enum::EulerAnglesOrder order = Enum::EulerAnglesOrder::PitchYawRoll) const;
 	Number Det() const;
 
 	Matrix4Type  operator+(const Matrix4Type& other) const;

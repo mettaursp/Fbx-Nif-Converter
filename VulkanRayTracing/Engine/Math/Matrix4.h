@@ -460,6 +460,106 @@ Vector3Type<Number, Number> Matrix4Type<Number>::ExtractScale() const
 	return Vec3(RightVector().Length(), UpVector().Length(), FrontVector().Length());
 }
 
+struct EulerAnglesPermutation
+{
+	struct Index
+	{
+		int X;
+		int Y;
+	};
+
+	float Sin1Sign;
+	Index Sin1;
+	float Cos1Sign;
+	Index Cos1;
+	float Sin2Sign;
+	Index Sin2;
+	float Sin3Sign;
+	Index Sin3;
+	float Cos3Sign;
+	Index Cos3;
+	float GimbalSinSign;
+	Index GimbalSin;
+	float GimbalCosSign;
+	Index GimbalCos;
+};
+
+const EulerAnglesPermutation RotationPermutations[] = {
+	{
+		-1, { 1, 2 },  1, { 2, 2 },
+		 1, { 0, 2 },
+		-1, { 0, 1 },  1, { 0, 0 },
+		 1, { 2, 1 },  1, { 1, 1 }
+
+	}, //PitchYawRoll,
+	{
+		 1, { 1, 1 },  1, { 0, 1 },
+		-1, { 0, 1 },
+		 1, { 0, 2 },  1, { 0, 0 },
+		-1, { 1, 2 },  1, { 2, 2 }
+	}, //PitchRollYaw,
+	{
+		 1, { 0, 2 },  1, { 2, 2 },
+		-1, { 1, 2 },
+		 1, { 1, 0 },  1, { 1, 1 },
+		 1, { 0, 1 },  1, { 2, 1 }
+	}, //YawPitchRoll,
+	{
+		-1, { 2, 0 },  1, { 0, 0 },
+		 1, { 1, 0 },
+		-1, { 1, 2 },  1, { 1, 1 },
+		 1, { 2, 1 }, -1, { 0, 1 }
+	}, //YawRollPitch,
+	{
+		-1, { 0, 1 },  1, { 1, 1 },
+		 1, { 2, 1 },
+		-1, { 2, 0 },  1, { 2, 2 },
+		 1, { 0, 2 }, -1, { 1, 2 }
+	}, //RollPitchYaw,
+	{
+		 1, { 1, 0 },  1, { 0, 0 },
+		-1, { 2, 0 },
+		 1, { 2, 1 },  1, { 2, 2 },
+		 1, { 1, 2 },  1, { 0, 2 }
+	}  //RollYawPitch
+};
+
+template <typename Number>
+Vector3Type<Number, Number> Matrix4Type<Number>::ExtractEulerAngles(Enum::EulerAnglesOrder order) const
+{
+	const EulerAnglesPermutation& perm = RotationPermutations[order];
+
+	Number sin1 = 0;
+	Number cos1 = 0;
+
+	Number sin2 = (Number)perm.Sin2Sign * Fetch(perm.Sin2.X, perm.Sin2.Y);
+
+	Number sin3 = 0;
+	Number cos3 = 1;
+
+	if (std::abs(sin2) > 0.999_F)
+	{
+		// gimbal lock
+
+		sin1 = (Number)perm.GimbalSinSign * Fetch(perm.GimbalSin.X, perm.GimbalSin.Y);
+		cos1 = (Number)perm.GimbalCosSign * Fetch(perm.GimbalCos.X, perm.GimbalCos.Y);
+	}
+	else
+	{
+		sin1 = (Number)perm.Sin1Sign * Fetch(perm.Sin1.X, perm.Sin1.Y);
+		cos1 = (Number)perm.Cos1Sign * Fetch(perm.Cos1.X, perm.Cos1.Y);
+
+		sin3 = (Number)perm.Sin3Sign * Fetch(perm.Sin3.X, perm.Sin3.Y);
+		cos3 = (Number)perm.Cos3Sign * Fetch(perm.Cos3.X, perm.Cos3.Y);
+	}
+
+	Number rotation1 = std::atan2(sin1, cos1);
+	Number rotation2 = std::asin(sin2);
+	Number rotation3 = std::atan2(sin3, cos3);
+
+	return Vec3(rotation1, rotation2, rotation3);
+}
+
 template <typename Number>
 Number Matrix4Type<Number>::Det() const
 {
