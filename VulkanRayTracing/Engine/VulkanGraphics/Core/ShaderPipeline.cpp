@@ -1,5 +1,7 @@
 #include "ShaderPipeline.h"
 
+import <filesystem>;
+
 #include "Shader.h"
 #include "VulkanErrorHandling.h"
 #include <Engine/VulkanGraphics/Scene/MeshData.h>
@@ -28,7 +30,23 @@ namespace Engine
 			if (InitializedShaders)
 				return NullPointer;
 
-			Shaders.push_back(Engine::Create<Graphics::Shader>(filePath, stage));
+			std::string extension;
+
+			switch (stage)
+			{
+			case vk::ShaderStageFlagBits::eVertex: extension = ".vert"; break;
+			case vk::ShaderStageFlagBits::eFragment: extension = ".frag"; break;
+			}
+
+			std::string inputPath = "./shaderSource/" + filePath + extension;
+			std::string outputPath = "./shaders/" + filePath + extension;
+
+			if (!std::filesystem::exists(std::filesystem::path(outputPath)))
+			{
+				throw "compile yo damn shaders";
+			}
+
+			Shaders.push_back(Engine::Create<Graphics::Shader>(outputPath, stage));
 			Shaders.back()->AttachToContext(GetContext());
 
 			return Shaders.back();

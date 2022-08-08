@@ -49,6 +49,9 @@
     <Filter Include="Source Files\Engine\Objects">
       <UniqueIdentifier>{68bd445e-6749-4184-9ae2-4f4e766e0893}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\GraphicsEngine\RenderPipeline">
+      <UniqueIdentifier>{96085f8f-c514-4de8-93f2-f8fe5a276937}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -138,9 +141,6 @@
     <ClCompile Include="Engine\VulkanGraphics\Core\Mesh.cpp">
       <Filter>Source Files\GraphicsEngine\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\VulkanGraphics\Core\PhongForwardPipeline.cpp">
-      <Filter>Source Files\GraphicsEngine\Core</Filter>
-    </ClCompile>
     <ClCompile Include="Engine\VulkanGraphics\Core\RenderQueue.cpp">
       <Filter>Source Files\GraphicsEngine\Core</Filter>
     </ClCompile>
@@ -194,6 +194,21 @@
     </ClCompile>
     <ClCompile Include="Engine\Assets\ModelPackageAsset.cpp">
       <Filter>Source Files\Engine\AssetManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\RenderTarget.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\BufferFormat.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\RenderPipeline\PhongForwardPipeline.cpp">
+      <Filter>Source Files\GraphicsEngine\RenderPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\RenderPipeline\DeferredInputPipeline.cpp">
+      <Filter>Source Files\GraphicsEngine\RenderPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\RenderPipeline\DeferredOutputPipeline.cpp">
+      <Filter>Source Files\GraphicsEngine\RenderPipeline</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -332,9 +347,6 @@
     <ClInclude Include="Engine\VulkanGraphics\Core\Mesh.h">
       <Filter>Source Files\GraphicsEngine\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\VulkanGraphics\Core\PhongForwardPipeline.h">
-      <Filter>Source Files\GraphicsEngine\Core</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\VulkanGraphics\Core\RenderQueue.h">
       <Filter>Source Files\GraphicsEngine\Core</Filter>
     </ClInclude>
@@ -409,6 +421,21 @@
     </ClInclude>
     <ClInclude Include="Engine\Assets\ParserUtils.h">
       <Filter>Source Files\Engine\AssetManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\RenderTarget.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\BufferFormat.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\PhongForwardPipeline.h">
+      <Filter>Source Files\GraphicsEngine\RenderPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\DeferredInputPipeline.h">
+      <Filter>Source Files\GraphicsEngine\RenderPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\DeferredOutputPipeline.h">
+      <Filter>Source Files\GraphicsEngine\RenderPipeline</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 #include "PhongForwardPipeline.h"
 
-#include "Shader.h"
-#include "Uniform.h"
+#include <Engine/VulkanGraphics/Core/Shader.h>
+#include <Engine/VulkanGraphics/Core/Uniform.h>
 
 namespace Engine
 {
@@ -9,8 +9,8 @@ namespace Engine
 	{
 		void PhongForwardPipeline::Configure()
 		{
-			std::shared_ptr<Shader> fragShader = AddShader("fragmentShaderTest.frag.bin", vk::ShaderStageFlagBits::eFragment);
-			std::shared_ptr<Shader> vertShader = AddShader("vertexShaderTest.vert.bin", vk::ShaderStageFlagBits::eVertex);
+			std::shared_ptr<Shader> fragShader = AddShader("fragmentShaderTest", vk::ShaderStageFlagBits::eFragment);
+			std::shared_ptr<Shader> vertShader = AddShader("vertexShaderTest", vk::ShaderStageFlagBits::eVertex);
 
 			Graphics::ShaderBinding uniformBuffer{ vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex, 1 };
 			Graphics::ShaderBinding samplers{ vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 1 };

@@ -102,7 +102,7 @@
       <ConformanceMode>true</ConformanceMode>
       <EnableModules>true</EnableModules>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <DisableSpecificWarnings>4005;5106;5105</DisableSpecificWarnings>
       <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
@@ -121,9 +121,10 @@
       <ConformanceMode>true</ConformanceMode>
       <EnableModules>true</EnableModules>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <DisableSpecificWarnings>4005;5106;5105</DisableSpecificWarnings>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,7 +142,7 @@
       <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
-      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <DisableSpecificWarnings>4005;5106;5105</DisableSpecificWarnings>
       <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
@@ -162,9 +163,10 @@
       <AdditionalIncludeDirectories>$(VULKAN_SDK)\Include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
-      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <DisableSpecificWarnings>4005;5106;5105</DisableSpecificWarnings>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -175,6 +177,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\VulkanGraphics\Core\BufferFormat.cpp" />
+    <ClCompile Include="Engine\VulkanGraphics\Core\RenderTarget.cpp" />
+    <ClCompile Include="Engine\VulkanGraphics\RenderPipeline\DeferredInputPipeline.cpp" />
+    <ClCompile Include="Engine\VulkanGraphics\RenderPipeline\DeferredOutputPipeline.cpp" />
     <ClCompile Include="main.cpp">
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MultiThreadedDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MultiThreadedDLL</RuntimeLibrary>
@@ -266,7 +272,7 @@
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MultiThreadedDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
-    <ClCompile Include="Engine\VulkanGraphics\Core\PhongForwardPipeline.cpp">
+    <ClCompile Include="Engine\VulkanGraphics\RenderPipeline\PhongForwardPipeline.cpp">
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MultiThreadedDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
@@ -392,6 +398,7 @@
     <ClInclude Include="Engine\Precision.h" />
     <ClInclude Include="Engine\Reflection\MetaData.h" />
     <ClInclude Include="Engine\Reflection\Reflected.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Core\BufferFormat.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\DeviceResource.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\DrawOperation.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\FrameBuffer.h" />
@@ -401,8 +408,11 @@
     <ClInclude Include="Engine\VulkanGraphics\Core\GraphicsWindow.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\ImageResource.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\Mesh.h" />
-    <ClInclude Include="Engine\VulkanGraphics\Core\PhongForwardPipeline.h" />
+    <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\DeferredInputPipeline.h" />
+    <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\DeferredOutputPipeline.h" />
+    <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\PhongForwardPipeline.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\RenderQueue.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Core\RenderTarget.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\Shader.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\ShaderPipeline.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\ShaderProgram.h" />
@@ -435,6 +445,11 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="shaderSource\fragment\normalmapconverter.frag" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VulkanModules\VulkanModules.vcxproj">
+      <Project>{836aeb0c-b0fb-4eb8-8570-fade039fc53e}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

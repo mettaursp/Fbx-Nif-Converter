@@ -41,7 +41,8 @@ import <set>;
 #include <Engine/VulkanGraphics/Core/Mesh.h>
 #include <Engine/VulkanGraphics/Core/RenderQueue.h>
 #include <Engine/VulkanGraphics/Core/Uniform.h>
-#include <Engine/VulkanGraphics/Core/PhongForwardPipeline.h>
+#include <Engine/VulkanGraphics/RenderPipeline/PhongForwardPipeline.h>
+#include <Engine/VulkanGraphics/RenderPipeline/DeferredInputPipeline.h>
 #include <Engine/VulkanGraphics/Core/ShaderProgram.h>
 #include <Engine/VulkanGraphics/Core/GraphicsRenderer.h>
 #include <Engine/VulkanGraphics/Scene/MeshAsset.h>
@@ -79,6 +80,8 @@ std::shared_ptr<Transform> transform1;
 std::shared_ptr<Graphics::Model> model2;
 std::shared_ptr<Transform> transform2;
 std::shared_ptr<Graphics::PhongForwardPipeline> phongForward;
+std::shared_ptr<Graphics::DeferredInputPipeline> deferredInput;
+std::shared_ptr<Graphics::FrameBuffer> gBuffer;
 std::shared_ptr<Graphics::Scene> scene;
 std::shared_ptr<Graphics::SceneDrawOperation> drawOperation;
 std::shared_ptr<Graphics::ShaderProgram> program;
@@ -97,8 +100,10 @@ Graphics::CombinedSamplerUniform* sampler = nullptr;
 Graphics::BufferObjectUniform* sceneInfo = nullptr;
 std::shared_ptr<Graphics::MeshAsset> meshAsset;
 std::shared_ptr<Graphics::MeshAsset> meshAsset2;
+std::shared_ptr<Graphics::MeshAsset> handleAsset;
 std::shared_ptr<Graphics::MeshAsset> hairMeshAsset;
 std::vector<std::shared_ptr<Transform>> transforms;
+std::vector<std::shared_ptr<Transform>> handleTransforms;
 float spinAngle = 0.1f;
 
 float degreesToRadians(float degrees)
@@ -117,13 +122,26 @@ void draw()
 	sceneInfo->Data.Time += 1.f / 144.f;
 	sceneInfo->UpdateData();
 
+	Matrix4 rotation = Matrix4F::YawRotation((float)degreesToRadians(spinAngle));
+
 	for (size_t i = 0; i < transforms.size(); ++i)
 	{
 		const Matrix4& transformation = transforms[i]->GetTransformation();
-		Matrix4 rotation = Matrix4(transformation.Translation()) * Matrix4F::PitchRotation(-(float)degreesToRadians(spinAngle)) * Matrix4(-transformation.Translation());
-		transforms[i]->SetTransformation(rotation * transformation);
+		Matrix4 newRotation = Matrix4(transformation.Translation()) * rotation * Matrix4(-transformation.Translation());
+		transforms[i]->SetTransformation(newRotation * transformation);
 		transforms[i]->Update(0);
 	}
+
+	for (size_t i = 0; i < handleTransforms.size(); ++i)
+	{
+		Transform* parent = (Transform*)handleTransforms[i]->GetParentRaw();
+		Matrix4 transformation;
+		transformation.ExtractRotation(parent->GetWorldTransformation(), parent->GetWorldPosition());
+		handleTransforms[i]->SetTransformation(transformation * Matrix4::NewScale(0.1f, 0.1f, 0.1f));
+		handleTransforms[i]->Update(0);
+	}
+
+	std::cout << rotation.ExtractEulerAngles() << std::endl;
 }
 struct hairobj
 {
@@ -157,6 +175,7 @@ void init(int argc, char** argv)
 
 	meshAsset = Engine::Create<Graphics::MeshAsset>();
 	meshAsset2 = Engine::Create<Graphics::MeshAsset>();
+	handleAsset = Engine::Create<Graphics::MeshAsset>();
 	hairMeshAsset = Engine::Create<Graphics::MeshAsset>();
 
 	if (initVulkan)
@@ -175,6 +194,9 @@ void init(int argc, char** argv)
 			textures.push_back(Engine::Create<Graphics::Texture>());
 			textures[0]->AttachToContext(context);
 		}
+
+		handleAsset->SetPath("models/handles.obj");
+		handleAsset->Load();
 	}
 
 	lookAt = Matrix4F::PitchRotation(0.2f) * Matrix4F(0, -2, -10);
@@ -278,6 +300,7 @@ void init(int argc, char** argv)
 	{
 		hairs[i].asset = Engine::Create<Engine::ModelPackageAsset>();
 		hairs[i].transform = Engine::Create<Transform>();
+		hairs[i].transform->Name = assets[i];
 
 		hairs[i].asset->SetImportPath(inputDirectory);
 
@@ -313,7 +336,7 @@ void init(int argc, char** argv)
 
 		int x = (int)i % 3;
 		int y = (int)i / 3;
-		Matrix4 transformation = Matrix4(1.5 * Vector3((double)x - 1.5, (double)y - 1.5, 0)) * Matrix4::NewScale(0.02, 0.02, 0.02) * Matrix4::EulerAnglesRotation(d2r(90), d2r(45), 0);
+		Matrix4 transformation = Matrix4(1.5 * Vector3((double)x - 1.5, (double)y - 1.5, 0)) * Matrix4::NewScale(0.02, 0.02, 0.02);// *Matrix4::EulerAnglesRotation(d2r(90), d2r(45), 0);
 
 		std::set<void*> reportedFormats;
 
@@ -321,6 +344,7 @@ void init(int argc, char** argv)
 		{
 			std::shared_ptr<Transform> modelTransform = Engine::Create<Transform>();
 			modelTransform->SetTransformation(transformation);
+			modelTransform->Name = assets[i];
 
 			hairs[i].transform = modelTransform;
 
@@ -331,8 +355,25 @@ void init(int argc, char** argv)
 			for (size_t j = 0; j < package.Nodes.size(); ++j)
 			{
 				std::shared_ptr<Transform> transform = Engine::Create<Transform>();
-
+				
+				transform->Name = package.Nodes[j].Transform->Name;
 				transform->SetTransformation(package.Nodes[j].Transform->GetTransformation());
+
+				if (initVulkan)
+				{
+					std::shared_ptr<Transform> handleTransform = Engine::Create<Transform>();
+					handleTransform->SetInheritsTransformation(false);
+					handleTransform->SetParent(transform);
+					handleTransform->Name = transform->Name + " Handle";
+
+					std::shared_ptr<Engine::Graphics::Model> handleModel = Engine::Create<Engine::Graphics::Model>();
+					handleModel->MeshAsset = handleAsset;
+					handleModel->SetParent(handleTransform);
+
+					scene->AddObject(handleModel);
+
+					handleTransforms.push_back(handleTransform);
+				}
 
 				if (package.Nodes[j].Mesh != nullptr)
 				{
@@ -359,7 +400,7 @@ void init(int argc, char** argv)
 							{
 								if (attributes[i].Binding == binding)
 								{
-									std::cout << "\t\t[" << attributes[i].Offset << "] " << Graphics::VertexAttributeFormat::DataTypeNames[attributes[i].Type] << "[" << attributes[i].ElementCount << "] " << attributes[i].Name << std::endl;
+									std::cout << "\t\t[" << attributes[i].Offset << "] " << Graphics::GetDataName(attributes[i].Type) << "[" << attributes[i].ElementCount << "] " << attributes[i].Name << std::endl;
 								}
 							}
 						}
@@ -484,8 +525,17 @@ int main(int argc, char** argv)
 	phongForward->Configure();
 	sampler = dynamic_cast<Graphics::CombinedSamplerUniform*>(phongForward->GetUniform(0).get());
 	sceneInfo = dynamic_cast<Graphics::BufferObjectUniform*>(phongForward->GetUniform(1).get());
-
+	
 	program->SetPipeline(phongForward);
+
+	//deferredInput = Engine::Create<Graphics::DeferredInputPipeline>();
+	//deferredInput->AttachToContext(context);
+	//deferredInput->Configure();
+	//
+	//sampler = dynamic_cast<Graphics::CombinedSamplerUniform*>(deferredInput->GetUniform(0).get());
+	//sceneInfo = dynamic_cast<Graphics::BufferObjectUniform*>(deferredInput->GetUniform(1).get());
+	//
+	//program->SetPipeline(deferredInput);
 
 	swapChain->PrepareRenderers();
 	
