@@ -71,6 +71,7 @@ StyleCopReport.xml
 *.ilk
 *.meta
 *.obj
+!/VulkanRayTracing/assets/*.obj
 *.iobj
 *.pch
 *.pdb
