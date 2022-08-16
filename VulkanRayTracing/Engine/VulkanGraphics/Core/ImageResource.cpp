@@ -57,6 +57,8 @@ namespace Engine
 
 		void ImageResource::CreateEmpty(vk::Format format, int x, int y)
 		{
+			ReleaseData();
+
 			format = vk::Format::eR32G32B32Sfloat;
 			int channels = GetChannels(format);
 
