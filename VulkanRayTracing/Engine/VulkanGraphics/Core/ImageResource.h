@@ -17,6 +17,7 @@ namespace Engine
 
 			void Load(const std::string& path, vk::Format format = vk::Format::eUndefined);
 			void Load(const char* path, vk::Format format = vk::Format::eUndefined);
+			void CreateEmpty(vk::Format format = vk::Format::eUndefined, int x = 1, int y = 1);
 			void ReleaseData();
 			const Vector2I& GetSize() const { return Size; }
 			const unsigned char* GetData() const { return Data; }
