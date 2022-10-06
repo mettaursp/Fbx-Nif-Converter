@@ -438,6 +438,10 @@
     <ClInclude Include="Engine\VulkanGraphics\Scene\Scene.h" />
     <ClInclude Include="Engine\VulkanGraphics\Scene\SceneDrawOperation.h" />
     <ClInclude Include="Engine\VulkanGraphics\Scene\SceneObject.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Scene\Skeleton-decl.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Scene\Skeleton.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Scene\SkeletonData-decl.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Scene\SkeletonData.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="stb_image_write.h" />
     <ClInclude Include="stb_truetype.h" />

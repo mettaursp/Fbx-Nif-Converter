@@ -25,6 +25,8 @@ public:
 	Quaternion operator*(const Quaternion& rhs) const;
 
 	Matrix4 Matrix() const;
+	Matrix4F MatrixF() const;
+	Matrix4D MatrixD() const;
 
 	Quaternion& Normalize();
 	Quaternion Cross(const Quaternion& other) const;

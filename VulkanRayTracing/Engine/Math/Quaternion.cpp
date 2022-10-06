@@ -42,6 +42,46 @@ Quaternion& Quaternion::Normalize()
 	return *this;
 }
 
+Matrix4F Quaternion::MatrixF() const
+{
+	float xx = float(X * X);
+	float yy = float(Y * Y);
+	float zz = float(Z * Z);
+	float xz = float(X * Z);
+	float xy = float(X * Y);
+	float yz = float(Y * Z);
+	float wx = float(W * X);
+	float wy = float(W * Y);
+	float wz = float(W * Z);
+
+	return Matrix4F(
+		Vector3F(0, 0, 0, 1),
+		Vector3F(1 - 2 * (yy + zz), 2 * (xy + wz), 2 * (xz - wy)).Normalize(),
+		Vector3F(2 * (xy - wz), 1 - 2 * (xx + zz), 2 * (yz + wx)).Normalize(),
+		Vector3F(2 * (xz + wy), 2 * (yz - wx), 1 - 2 * (xx + yy)).Normalize()
+	);
+}
+
+Matrix4D Quaternion::MatrixD() const
+{
+	double xx = double(X * X);
+	double yy = double(Y * Y);
+	double zz = double(Z * Z);
+	double xz = double(X * Z);
+	double xy = double(X * Y);
+	double yz = double(Y * Z);
+	double wx = double(W * X);
+	double wy = double(W * Y);
+	double wz = double(W * Z);
+
+	return Matrix4D(
+		Vector3D(0, 0, 0, 1),
+		Vector3D(1 - 2 * (yy + zz), 2 * (xy + wz), 2 * (xz - wy)).Normalize(),
+		Vector3D(2 * (xy - wz), 1 - 2 * (xx + zz), 2 * (yz + wx)).Normalize(),
+		Vector3D(2 * (xz + wy), 2 * (yz - wx), 1 - 2 * (xx + yy)).Normalize()
+	);
+}
+
 Matrix4 Quaternion::Matrix() const
 {
 	Float xx = X * X;

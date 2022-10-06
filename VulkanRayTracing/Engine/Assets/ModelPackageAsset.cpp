@@ -18,7 +18,7 @@ namespace Engine
 	{
 		const FilePath& extension = GetExtension();
 
-		if (extension == FilePath(".nif"))
+		if (extension == FilePath(".nif") || extension == FilePath(".kf"))
 		{
 			NifParser parser;
 			parser.Package = &Package;
@@ -55,7 +55,7 @@ namespace Engine
 
 	void ModelPackageAsset::Saving(std::ostream& file, const FilePath& extension)
 	{
-		if (extension == FilePath(".nif"))
+		if (extension == FilePath(".nif") || extension == FilePath(".kf"))
 		{
 			NifWriter writer;
 			writer.Package = &Package;

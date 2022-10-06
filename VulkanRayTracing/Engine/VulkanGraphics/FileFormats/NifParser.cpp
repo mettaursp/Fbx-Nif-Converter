@@ -8,6 +8,7 @@ import <set>;
 #include <Engine/Math/Vector3S.h>
 #include <Engine/Math/Vector2S.h>
 #include <Engine/Math/Matrix4.h>
+#include <Engine/Math/Quaternion.h>
 #include <Engine/Assets/ParserUtils.h>
 #include <Engine/Objects/Transform.h>
 
@@ -15,7 +16,7 @@ import <set>;
 #include "NifComponentInfo.h"
 #include "NifBlockTypes.h"
 
-void NifDocument::ParseTransform(std::istream& stream, NiTransform& transform, bool translationFirst)
+void NifDocument::ParseTransform(std::istream& stream, NiTransform& transform, bool translationFirst, bool isQuaternion)
 {
 	if (translationFirst)
 	{
@@ -26,24 +27,36 @@ void NifDocument::ParseTransform(std::istream& stream, NiTransform& transform, b
 		);
 	}
 
-	transform.Rotation = Matrix4F(
-		Vector3F(),
-		Vector3F(
+	if (!isQuaternion)
+	{
+		transform.Rotation = Matrix4F(
+			Vector3F(),
+			Vector3F(
+				Endian.read<float>(stream),
+				Endian.read<float>(stream),
+				Endian.read<float>(stream)
+			),
+			Vector3F(
+				Endian.read<float>(stream),
+				Endian.read<float>(stream),
+				Endian.read<float>(stream)
+			),
+			Vector3F(
+				Endian.read<float>(stream),
+				Endian.read<float>(stream),
+				Endian.read<float>(stream)
+			)
+		);
+	}
+	else
+	{
+		transform.Rotation = Quaternion(Vector3(
+			Endian.read<float>(stream),
 			Endian.read<float>(stream),
 			Endian.read<float>(stream),
 			Endian.read<float>(stream)
-		),
-		Vector3F(
-			Endian.read<float>(stream),
-			Endian.read<float>(stream),
-			Endian.read<float>(stream)
-		),
-		Vector3F(
-			Endian.read<float>(stream),
-			Endian.read<float>(stream),
-			Endian.read<float>(stream)
-		)
-	);
+		)).MatrixF();
+	}
 
 	if (!translationFirst)
 	{
@@ -232,6 +245,21 @@ void NifDocument::ParseTexturingProperty(std::istream& stream, BlockData& block)
 	readTextureData(data->GlossTexture);
 	readTextureData(data->GlowTexture);
 	readTextureData(data->BumpTexture);
+
+	if (data->BumpTexture.HasThisTexture)
+	{
+		data->BumpMapLumaScale = Endian.read<float>(stream);
+		data->BumpMapLumaOffset = Endian.read<float>(stream);
+		data->BumpMapRight.Set(
+			Endian.read<float>(stream),
+			Endian.read<float>(stream)
+		);
+		data->BumpMapUp.Set(
+			Endian.read<float>(stream),
+			Endian.read<float>(stream)
+		);
+	}
+
 	readTextureData(data->NormalTexture);
 	readTextureData(data->ParallaxTexture);
 	readTextureData(data->Decal0Texture);
@@ -243,7 +271,9 @@ void NifDocument::ParseTexturingProperty(std::istream& stream, BlockData& block)
 	for (unsigned int i = 0; i < shaderTextureCount; ++i)
 	{
 		readTextureData(data->ShaderTextures[i].Map);
-		data->ShaderTextures[i].MapId = Endian.read<unsigned int>(stream);
+
+		if (data->ShaderTextures[i].Map.HasThisTexture)
+			data->ShaderTextures[i].MapId = Endian.read<unsigned int>(stream);
 	}
 }
 
@@ -372,6 +402,165 @@ void NifDocument::ParseSkinningMeshModifier(std::istream& stream, BlockData& blo
 	}
 }
 
+void NifDocument::ParseSequenceData(std::istream& stream, BlockData& block)
+{
+	NiSequenceData* data = block.AddData<NiSequenceData>();
+
+	unsigned int numEvaluators = Endian.read<unsigned int>(stream);
+
+	data->Evaluators.resize(numEvaluators);
+
+	for (unsigned int i = 0; i < numEvaluators; ++i)
+		data->Evaluators[i] = FetchRef(stream);
+
+	data->TextKeys = FetchRef(stream);
+	data->Duration = Endian.read<float>(stream);
+	data->CycleType = (CycleType)Endian.read<unsigned int>(stream);
+	data->Frequency = Endian.read<float>(stream);
+
+	unsigned int name = Endian.read<unsigned int>(stream);
+
+	if (name != 0xFFFFFFFFu)
+		data->AccumRootName = Strings[name];
+
+	data->AccumFlags = (AccumFlags)Endian.read<unsigned int>(stream);
+}
+
+void NifDocument::ParseEvaluator(std::istream& stream, BlockData& block, NiEvaluator* data)
+{
+	data->NodeName = FetchString(stream);
+	data->PropertyType = FetchString(stream);
+	data->ControllerType = FetchString(stream);
+	data->ControllerId = FetchString(stream);
+	data->InterpolatorId = FetchString(stream);
+	
+	unsigned char positionChannel = Endian.read<unsigned char>(stream);
+	unsigned char rotationChannel = Endian.read<unsigned char>(stream);
+	unsigned char scaleChannel = Endian.read<unsigned char>(stream);
+	unsigned char flags = Endian.read<unsigned char>(stream);
+
+	data->PositionPosed = positionChannel & 0x40;
+	data->PositionChannel = (ChannelType)(positionChannel & 0x2F);
+	data->RotationPosed = rotationChannel & 0x40;
+	data->RotationChannel = (ChannelType)(rotationChannel & 0x2F);
+	data->ScalePosed = scaleChannel & 0x40;
+	data->ScaleChannel = (ChannelType)(scaleChannel & 0x2F);
+
+	data->ChannelFlags = (ChannelTypeFlags)flags;
+}
+
+void NifDocument::ParseBSplineCompTransformEvaluator(std::istream& stream, BlockData& block)
+{
+	NiBSplineCompTransformEvaluator* data = block.AddData<NiBSplineCompTransformEvaluator>();
+
+	ParseEvaluator(stream, block, data);
+
+	data->StartTime = Endian.read<float>(stream);
+	data->EndTime = Endian.read<float>(stream);
+	data->Data = FetchRef(stream);
+	data->BasisData = FetchRef(stream);
+
+	ParseTransform(stream, data->Transform, true, true);
+
+	data->TranslationHandle = Endian.read<unsigned int>(stream);
+	data->RotationHandle = Endian.read<unsigned int>(stream);
+	data->ScaleHandle = Endian.read<unsigned int>(stream);
+	data->TranslationOffset = Endian.read<float>(stream);
+	data->TranslationHalfRange = Endian.read<float>(stream);
+	data->RotationOffset = Endian.read<float>(stream);
+	data->RotationHalfRange = Endian.read<float>(stream);
+	data->ScaleOffset = Endian.read<float>(stream);
+	data->ScaleHalfRange = Endian.read<float>(stream);
+}
+
+void NifDocument::ParseBSpineData(std::istream& stream, BlockData& block)
+{
+	NiBSpineData* data = block.AddData<NiBSpineData>();
+
+	unsigned int numFloatControlPoints = Endian.read<unsigned int>(stream);
+
+	data->FloatControlPoints.resize(numFloatControlPoints);
+
+	for (unsigned int i = 0; i < numFloatControlPoints; ++i)
+		data->FloatControlPoints[i] = Endian.read<float>(stream);
+
+	unsigned int numCompactControlPoints = Endian.read<unsigned int>(stream);
+
+	data->CompactControlPoints.resize(numCompactControlPoints);
+
+	for (unsigned int i = 0; i < numCompactControlPoints; ++i)
+		data->CompactControlPoints[i] = Endian.read<short>(stream);
+}
+
+void NifDocument::ParseBSplineBasisData(std::istream& stream, BlockData& block)
+{
+	NiBSplineBasisData* data = block.AddData<NiBSplineBasisData>();
+
+	data->NumControlPoints = Endian.read<unsigned int>(stream);
+}
+
+void NifDocument::ParseTransformEvaluator(std::istream& stream, BlockData& block)
+{
+	NiTransformEvaluator* data = block.AddData<NiTransformEvaluator>();
+
+	ParseEvaluator(stream, block, data);
+	ParseTransform(stream, data->Value, true, true);
+
+	data->Data = FetchRef(stream);
+}
+
+template <>
+float ParseKey<float>(NifDocument* document, std::istream& stream)
+{
+	return document->Endian.read<float>(stream);
+}
+
+template <>
+Quaternion ParseKey<Quaternion>(NifDocument* document, std::istream& stream)
+{
+	return Quaternion(Vector3(
+		document->Endian.read<float>(stream),
+		document->Endian.read<float>(stream),
+		document->Endian.read<float>(stream),
+		document->Endian.read<float>(stream)
+	));
+}
+
+template <>
+Vector3F ParseKey<Vector3F>(NifDocument* document, std::istream& stream)
+{
+	return Vector3F(
+		document->Endian.read<float>(stream),
+		document->Endian.read<float>(stream),
+		document->Endian.read<float>(stream)
+	);
+}
+
+
+void NifDocument::ParseTransformData(std::istream& stream, BlockData& block)
+{
+	NiTransformData* data = block.AddData<NiTransformData>();
+
+	data->RotationKeys.Parse(this, stream);
+	data->TranslationKeys.Parse(this, stream);
+	data->ScaleKeys.Parse(this, stream);
+}
+
+void NifDocument::ParseTextKeyExtraData(std::istream& stream, BlockData& block)
+{
+	NiTextKeyExtraData* data = block.AddData<NiTextKeyExtraData>();
+
+	unsigned int length = Endian.read<unsigned int>(stream);
+
+	data->TextKeys.resize(length);
+
+	for (unsigned int i = 0; i < length; ++i)
+	{
+		data->TextKeys[i].Time = Endian.read<float>(stream);
+		data->TextKeys[i].Value = FetchString(stream);
+	}
+}
+
 void NifDocument::ParserNoOp(std::istream& stream, BlockData& block)
 {
 	char buffer[0xFFF];
@@ -394,10 +583,28 @@ std::map<std::string, NifDocument::BlockParseFunction> parserFunctions = {
 	{ "NiDataStream", &NifDocument::ParseStream },
 	{ "NiMaterialProperty", &NifDocument::ParseMaterialProperty },
 	{ "NiSkinningMeshModifier", &NifDocument::ParseSkinningMeshModifier },
+	{ "NiSequenceData", &NifDocument::ParseSequenceData },
+	{ "NiBSplineCompTransformEvaluator", &NifDocument::ParseBSplineCompTransformEvaluator },
+	{ "NiBSpineData", &NifDocument::ParseBSpineData },
+	{ "NiBSplineBasisData", &NifDocument::ParseBSplineBasisData },
+	{ "NiTransformEvaluator", &NifDocument::ParseTransformEvaluator },
+	{ "NiTransformData", &NifDocument::ParseTransformData },
+	{ "NiTextKeyExtraData", &NifDocument::ParseTextKeyExtraData },
 };
 
 std::set<std::string> ignoreBlockName = {
-	"NiFloatInterpolator", "NiFloatData", "NiDataStream", "NiTextureTransformController", "NiTransformController", "NiTransformInterpolator", "NiSkinningMeshModifier"
+	"NiFloatInterpolator",
+	"NiFloatData",
+	"NiDataStream",
+	"NiTextureTransformController",
+	"NiTransformController",
+	"NiTransformInterpolator",
+	"NiSkinningMeshModifier",
+	"NiBSplineCompTransformEvaluator",
+	"NiBSplineData",
+	"NiBSplineBasisData",
+	"NiTransformEvaluator",
+	"NiTransformData"
 };
 
 std::map<std::string, std::string> attributeAliases = {
@@ -451,6 +658,9 @@ void NifParser::Parse(std::istream& stream)
 
 	unsigned short numBlockTypes = endian.read<unsigned short>(stream);
 
+	if (numBlockTypes == 0)
+		return;
+
 	document.BlockTypes.resize(numBlockTypes);
 	document.BlockTypeIndices.resize(numBlocks);
 	document.BlockSizes.resize(numBlocks);
@@ -467,7 +677,7 @@ void NifParser::Parse(std::istream& stream)
 	}
 
 	for (unsigned int i = 0; i < numBlocks; ++i)
-		document.BlockTypeIndices[i] = endian.read<unsigned short>(stream);
+		document.BlockTypeIndices[i] = 0x7FFF & endian.read<unsigned short>(stream);
 
 	for (unsigned int i = 0; i < numBlocks; ++i)
 		document.BlockSizes[i] = endian.read<unsigned int>(stream);
@@ -534,7 +744,18 @@ void NifParser::Parse(std::istream& stream)
 		unsigned int parsedInBlock = (unsigned int)stream.tellg() - position;
 
 		if (parsedInBlock != block.BlockSize)
+		{
+			stream.seekg(position + block.BlockStart);
+
+			auto parserIterator = parserFunctions.find(typeName);
+
+			if (parserIterator == parserFunctions.end())
+				document.ParserNoOp(stream, block);
+			else
+				(document.*(parserIterator->second))(stream, block);
+
 			throw "block parser read wrong amount";
+		}
 	}
 
 	std::map<unsigned int, BlockData*> parents;

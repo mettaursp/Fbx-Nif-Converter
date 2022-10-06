@@ -12,6 +12,7 @@ import <limits>;
 #include <Engine/Math/Matrix4.h>
 #include <Engine/Math/Color4.h>
 #include <Engine/Math/Color3.h>
+#include <Engine/Math/Quaternion.h>
 #include <Engine/VulkanGraphics/Scene/MeshData.h>
 #include "NifComponentInfo.h"
 
@@ -299,6 +300,10 @@ struct NiTexturingProperty : public NiDataBlock
 	TextureData GlossTexture;
 	TextureData GlowTexture;
 	TextureData BumpTexture;
+	float BumpMapLumaScale = 1;
+	float BumpMapLumaOffset = 0;
+	Vector2SF BumpMapRight;
+	Vector2SF BumpMapUp;
 	TextureData NormalTexture;
 	TextureData ParallaxTexture;
 	TextureData Decal0Texture;
@@ -411,6 +416,277 @@ struct NiDataStream : public NiDataBlock
 	std::vector<Engine::Graphics::VertexAttributeFormat> Attributes;
 };
 
+struct CycleTypeEnum
+{
+	enum CycleType
+	{
+		CycleLoop,
+		CycleReverse,
+		CycleClamp
+	};
+};
+
+typedef CycleTypeEnum::CycleType CycleType;
+
+struct AccumFlagsEnum
+{
+	enum AccumFlags
+	{
+		AccumXTrans = 1,
+		AccumYTrans = 2,
+		AccumZTrans = 4,
+		AccumXRot = 8,
+		AccumYRot = 16,
+		AccumZRot = 32,
+		AccumXFront = 64,
+		AccumYFront = 128,
+		AccumZFront = 256,
+		AccumNegFront = 512
+	};
+};
+
+typedef AccumFlagsEnum::AccumFlags AccumFlags;
+
+struct NiSequenceData : public NiDataBlock
+{
+	static inline const std::string BlockTypeName = "NiSequenceData";
+
+	std::vector<const BlockData*> Evaluators;
+	const BlockData* TextKeys = nullptr;
+	float Duration = 0;
+	CycleType CycleType;
+	float Frequency = 0;
+	std::string AccumRootName;
+	AccumFlags AccumFlags;
+};
+
+struct ChannelTypeEnum
+{
+	enum ChannelType
+	{
+		Invalid,
+		Color,
+		Bool,
+		Float,
+		Vector3,
+		Quaternion
+	};
+};
+
+typedef ChannelTypeEnum::ChannelType ChannelType;
+
+struct ChannelTypeFlagsEnum
+{
+	enum ChannelTypeFlags
+	{
+		Referenced = 1,
+		Transform = 2,
+		AlwaysUpdate = 4,
+		Shutdown = 8
+	};
+};
+
+typedef ChannelTypeFlagsEnum::ChannelTypeFlags ChannelTypeFlags;
+
+struct NiEvaluator : public NiDataBlock
+{
+	std::string NodeName;
+	std::string PropertyType;
+	std::string ControllerType;
+	std::string ControllerId;
+	std::string InterpolatorId;
+	bool PositionPosed;
+	ChannelType PositionChannel;
+	bool RotationPosed;
+	ChannelType RotationChannel;
+	bool ScalePosed;
+	ChannelType ScaleChannel;
+	ChannelTypeFlags ChannelFlags;
+};
+
+struct NiBSplineCompTransformEvaluator : public NiEvaluator
+{
+	static inline const std::string BlockTypeName = "NiBSplineCompTransformEvaluator";
+
+	float StartTime = 0;
+	float EndTime = 0;
+	const BlockData* Data = nullptr;
+	const BlockData* BasisData = nullptr;
+	NiTransform Transform;
+	unsigned int TranslationHandle = 0;
+	unsigned int RotationHandle = 0;
+	unsigned int ScaleHandle = 0;
+	float TranslationOffset = 0;
+	float TranslationHalfRange = 0;
+	float RotationOffset = 0;
+	float RotationHalfRange = 0;
+	float ScaleOffset = 0;
+	float ScaleHalfRange = 0;
+};
+
+struct NiBSpineData : public NiDataBlock
+{
+	static inline const std::string BlockTypeName = "NiBSpineData";
+
+	std::vector<float> FloatControlPoints;
+	std::vector<short> CompactControlPoints;
+};
+
+struct NiBSplineBasisData : public NiDataBlock
+{
+	static inline const std::string BlockTypeName = "NiBSplineBasisData";
+
+	unsigned int NumControlPoints = 0;
+};
+
+struct NiTransformEvaluator : public NiEvaluator
+{
+	static inline const std::string BlockTypeName = "NiTransformEvaluator";
+
+	NiTransform Value;
+	const BlockData* Data = nullptr;
+};
+
+struct RotationTypeEnum
+{
+	enum RotationType
+	{
+		LinearKey = 1,
+		QuadraticKey = 2, // quadratic interpolation, forward n back tangents stored
+		TbcKey = 3, // tension bias continuity interolation
+		XyzRotationKey = 4, // rotation, seperate x, y, z keys instead of quaternions
+		ConstKey = 5 // step function
+	};
+};
+
+typedef RotationTypeEnum::RotationType RotationType;
+
+struct NifDocument;
+
+template <typename KeyType>
+KeyType ParseKey(NifDocument* document, std::istream& stream);
+
+template <>
+float ParseKey<float>(NifDocument* document, std::istream& stream);
+
+template <>
+Quaternion ParseKey<Quaternion>(NifDocument* document, std::istream& stream);
+
+template <>
+Vector3F ParseKey<Vector3F>(NifDocument* document, std::istream& stream);
+
+template <typename KeyType>
+struct LinearKey
+{
+	static const RotationType Type = RotationType::LinearKey;
+
+	float Time;
+	KeyType Value;
+
+	void Parse(NifDocument* document, std::istream& stream);
+};
+
+template <typename KeyType>
+struct QuadraticKey
+{
+	static const RotationType Type = RotationType::QuadraticKey;
+
+	float Time;
+	KeyType Value;
+	KeyType Forward;
+	KeyType Backward;
+
+	void Parse(NifDocument* document, std::istream& stream);
+};
+
+template <typename KeyType>
+struct TbcKey
+{
+	static const RotationType Type = RotationType::TbcKey;
+
+	float Time;
+	KeyType Value;
+	float Tension;
+	float Bias;
+	float Continuity;
+
+	void Parse(NifDocument* document, std::istream& stream);
+};
+
+template <typename KeyType>
+struct Keys
+{
+	RotationType Interpolation;
+	std::vector<KeyType> KeysValues;
+
+	void Parse(NifDocument* document, std::istream& stream);
+};
+
+template <typename KeyType>
+struct AnyKeysNoRotate
+{
+	RotationType Interpolation;
+	std::vector<LinearKey<KeyType>> LinearKeys;
+	std::vector<QuadraticKey<KeyType>> QuadraticKeys;
+	std::vector<TbcKey<KeyType>> TbcKeys;
+
+	template <typename KeyContainer>
+	void ParseKeyVector(NifDocument* document, std::istream& stream, KeyContainer& container, unsigned int keys);
+	void Parse(NifDocument* document, std::istream& stream);
+};
+
+struct XyzKeys
+{
+	static const RotationType Type = RotationType::XyzRotationKey;
+
+	AnyKeysNoRotate<float> KeysX;
+	AnyKeysNoRotate<float> KeysY;
+	AnyKeysNoRotate<float> KeysZ;
+
+	void Parse(NifDocument* document, std::istream& stream)
+	{
+		KeysX.Parse(document, stream);
+		KeysY.Parse(document, stream);
+		KeysZ.Parse(document, stream);
+	}
+};
+
+template <typename KeyType>
+struct AnyKeys
+{
+	RotationType Interpolation;
+	std::vector<LinearKey<KeyType>> LinearKeys;
+	std::vector<QuadraticKey<KeyType>> QuadraticKeys;
+	std::vector<TbcKey<KeyType>> TbcKeys;
+	std::vector<XyzKeys> XyzKeys;
+
+	template <typename KeyContainer>
+	void ParseKeyVector(NifDocument* document, std::istream& stream, KeyContainer& container, unsigned int keys);
+	void Parse(NifDocument* document, std::istream& stream);
+};
+
+struct NiTransformData : public NiDataBlock
+{
+	static inline const std::string BlockTypeName = "NiTransformData";
+
+	AnyKeys<Quaternion> RotationKeys;
+	AnyKeys<Vector3F> TranslationKeys;
+	AnyKeys<float> ScaleKeys;
+};
+
+struct TextKey
+{
+	float Time = 0;
+	std::string Value;
+};
+
+struct NiTextKeyExtraData : public NiDataBlock
+{
+	static inline const std::string BlockTypeName = "NiTextKeyExtraData";
+
+	std::vector<TextKey> TextKeys;
+};
+
 struct NifDocument
 {
 	typedef void (NifDocument::* BlockParseFunction)(std::istream& stream, BlockData& block);
@@ -428,12 +704,20 @@ struct NifDocument
 	void ParseStream(std::istream& stream, BlockData& block);
 	void ParseSourceTexture(std::istream& stream, BlockData& block);
 	void ParseTexturingProperty(std::istream& stream, BlockData& block);
-	void ParseTransform(std::istream& stream, NiTransform& transform, bool translationFirst = true);
+	void ParseTransform(std::istream& stream, NiTransform& transform, bool translationFirst = true, bool isQuaternion = false);
 	void ParseBounds(std::istream& stream, NiBounds& bounds);
 	void ParseMesh(std::istream& stream, BlockData& block);
 	void ParseNode(std::istream& stream, BlockData& block);
 	void ParseMaterialProperty(std::istream& stream, BlockData& block);
 	void ParseSkinningMeshModifier(std::istream& stream, BlockData& block);
+	void ParseSequenceData(std::istream& stream, BlockData& block);
+	void ParseBSplineCompTransformEvaluator(std::istream& stream, BlockData& block);
+	void ParseBSpineData(std::istream& stream, BlockData& block);
+	void ParseEvaluator(std::istream& stream, BlockData& block, NiEvaluator* data);
+	void ParseBSplineBasisData(std::istream& stream, BlockData& block);
+	void ParseTransformEvaluator(std::istream& stream, BlockData& block);
+	void ParseTransformData(std::istream& stream, BlockData& block);
+	void ParseTextKeyExtraData(std::istream& stream, BlockData& block);
 
 	void WriteNode(std::ostream& stream, BlockData& block);
 	void WriteMesh(std::ostream& stream, BlockData& block);
@@ -482,7 +766,136 @@ struct NifDocument
 	BlockData& InitializeBlock(unsigned int blockIndex);
 	const BlockData* FetchRef(unsigned int ref);
 	const BlockData* FetchRef(std::istream& stream);
+	const std::string& FetchString(unsigned int ref);
+	const std::string& FetchString(std::istream& stream);
 	void ReadBlockRefs(std::istream& stream, BlockData& block, std::vector<const BlockData*>& refs);
 };
 
 std::shared_ptr<Engine::Graphics::MeshFormat> GetNiMeshFormat();
+
+template <typename KeyType>
+void LinearKey<KeyType>::Parse(NifDocument* document, std::istream& stream)
+{
+	Time = document->Endian.read<float>(stream);
+	Value = ParseKey<KeyType>(document, stream);
+}
+
+template <typename KeyType>
+void QuadraticKey<KeyType>::Parse(NifDocument* document, std::istream& stream)
+{
+	Time = document->Endian.read<float>(stream);
+	Value = ParseKey<KeyType>(document, stream);
+	Forward = ParseKey<KeyType>(document, stream);
+	Backward = ParseKey<KeyType>(document, stream);
+}
+
+template <typename KeyType>
+void TbcKey<KeyType>::Parse(NifDocument* document, std::istream& stream)
+{
+	Time = document->Endian.read<float>(stream);
+	Value = ParseKey<KeyType>(document, stream);
+	Tension = document->Endian.read<float>(stream);
+	Bias = document->Endian.read<float>(stream);
+	Continuity = document->Endian.read<float>(stream);
+}
+
+template <typename KeyType>
+void Keys<KeyType>::Parse(NifDocument* document, std::istream& stream)
+{
+	unsigned int length = document->Endian.read<unsigned int>(stream);
+
+	if (length == 0) return;
+
+	Interpolation = (RotationType)document->Endian.read<unsigned int>(stream);
+
+	if (Interpolation != KeyType::Type)
+		throw "unsupported";
+
+	KeysValues.resize(length);
+
+	for (unsigned int i = 0; i < length; ++i)
+		KeysValues[i].Parse(document, stream);
+}
+
+template <typename KeyType>
+template <typename Vector>
+void AnyKeys<KeyType>::ParseKeyVector(NifDocument* document, std::istream& stream, Vector& vector, unsigned int keys)
+{
+	vector.resize(keys);
+
+	for (unsigned int i = 0; i < keys; ++i)
+		vector[i].Parse(document, stream);
+}
+
+template <typename Type>
+constexpr bool IsQuaternion()
+{
+	return false;
+}
+
+template <>
+constexpr bool IsQuaternion<Quaternion>()
+{
+	return true;
+}
+
+template <typename KeyType>
+void AnyKeys<KeyType>::Parse(NifDocument* document, std::istream& stream)
+{
+	unsigned int length = document->Endian.read<unsigned int>(stream);
+
+	if (length == 0) return;
+
+	Interpolation = (RotationType)document->Endian.read<unsigned int>(stream);
+
+	if (Interpolation == RotationType::ConstKey)
+		throw "unsupported";
+
+	if (IsQuaternion<KeyType>())
+	{
+		if (Interpolation == RotationType::QuadraticKey)
+		{
+			ParseKeyVector(document, stream, LinearKeys, length);
+
+			return;
+		}
+	}
+
+	switch (Interpolation)
+	{
+	case RotationType::LinearKey: ParseKeyVector(document, stream, LinearKeys, length); break;
+	case RotationType::QuadraticKey: ParseKeyVector(document, stream, QuadraticKeys, length); break;
+	case RotationType::TbcKey: ParseKeyVector(document, stream, TbcKeys, length); break;
+	case RotationType::XyzRotationKey: ParseKeyVector(document, stream, XyzKeys, length); break;
+	}
+}
+
+template <typename KeyType>
+template <typename Vector>
+void AnyKeysNoRotate<KeyType>::ParseKeyVector(NifDocument* document, std::istream& stream, Vector& vector, unsigned int keys)
+{
+	vector.resize(keys);
+
+	for (unsigned int i = 0; i < keys; ++i)
+		vector[i].Parse(document, stream);
+}
+
+template <typename KeyType>
+void AnyKeysNoRotate<KeyType>::Parse(NifDocument* document, std::istream& stream)
+{
+	unsigned int length = document->Endian.read<unsigned int>(stream);
+
+	if (length == 0) return;
+
+	Interpolation = (RotationType)document->Endian.read<unsigned int>(stream);
+
+	if (Interpolation == RotationType::ConstKey || Interpolation == RotationType::XyzRotationKey)
+		throw "unsupported";
+
+	switch (Interpolation)
+	{
+	case RotationType::LinearKey: ParseKeyVector(document, stream, LinearKeys, length); break;
+	case RotationType::QuadraticKey: ParseKeyVector(document, stream, QuadraticKeys, length); break;
+	case RotationType::TbcKey: ParseKeyVector(document, stream, TbcKeys, length); break;
+	}
+}

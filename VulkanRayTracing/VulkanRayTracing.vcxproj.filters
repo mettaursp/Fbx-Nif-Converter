@@ -437,6 +437,18 @@
     <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\DeferredOutputPipeline.h">
       <Filter>Source Files\GraphicsEngine\RenderPipeline</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\SkeletonData-decl.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\Skeleton-decl.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\Skeleton.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\SkeletonData.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaderSource\fragment\normalmapconverter.frag" />

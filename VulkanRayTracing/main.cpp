@@ -149,6 +149,7 @@ struct hairobj
 	std::vector<std::shared_ptr<Graphics::Model>> models;
 	std::shared_ptr<Transform> transform;
 };
+
 std::vector<hairobj> hairs;
 void init(int argc, char** argv)
 {
@@ -157,6 +158,10 @@ void init(int argc, char** argv)
 
 	std::string inputDirectory = "import/";
 	std::string outputDirectory = "export/";
+	bool recursiveSearch = false;
+
+	std::vector<std::string> extensionBlacklist;
+	std::vector<std::string> extensionWhitelist;
 
 	for (int i = 0; i < argc; ++i)
 	{
@@ -166,12 +171,29 @@ void init(int argc, char** argv)
 		if (arg == "--no-vulkan")
 			initVulkan = false;
 
+		if (arg == "--recursive")
+			recursiveSearch = true;
+
 		if (arg == "--import-dir" && i + 1 < argc)
 			inputDirectory = argv[i + 1];
 
 		if (arg == "--export-dir" && i + 1 < argc)
 			outputDirectory = argv[i + 1];
+
+		if (arg == "--ignore-extensions")
+			for (int j = 1; i + j < argc && argv[i + j][0] != '-'; ++j)
+				extensionBlacklist.push_back(argv[i + j]);
+
+		if (arg == "--find-extensions")
+			for (int j = 1; i + j < argc && argv[i + j][0] != '-'; ++j)
+				extensionWhitelist.push_back(argv[i + j]);
 	}
+
+	if (inputDirectory.size() > 0 && (inputDirectory[inputDirectory.size() - 1] != '/' || inputDirectory[inputDirectory.size() - 1] != '\\'))
+		inputDirectory += '/';
+
+	if (outputDirectory.size() > 0 && (outputDirectory[outputDirectory.size() - 1] != '/' || outputDirectory[outputDirectory.size() - 1] != '\\'))
+		outputDirectory += '/';
 
 	meshAsset = Engine::Create<Graphics::MeshAsset>();
 	meshAsset2 = Engine::Create<Graphics::MeshAsset>();
@@ -245,10 +267,46 @@ void init(int argc, char** argv)
 
 	if (canUseInput)
 	{
-		for (auto& file : std::filesystem::directory_iterator(inputDirectory))
+		std::function<void(const std::filesystem::path& directory)> callback;
+
+		static auto contains = [](const std::vector<std::string>& vector, const std::string& value)
 		{
-			assets.push_back(file.path().filename().string());
-		}
+			for (size_t i = 0; i < vector.size(); ++i)
+				if (vector[i] == value)
+					return true;
+
+			return false;
+		};
+
+		callback = [&callback, &assets, &inputDirectory, &extensionBlacklist, &extensionWhitelist, recursiveSearch](const std::filesystem::path& directory)
+		{
+			for (auto& file : std::filesystem::directory_iterator(directory))
+			{
+				std::filesystem::file_status status = file.symlink_status();
+
+				if (std::filesystem::is_directory(status))
+				{
+					if (recursiveSearch)
+						callback(file.path());
+
+					continue;
+				}
+
+				std::filesystem::path relative = std::filesystem::relative(file.path(), inputDirectory);
+
+				std::string extension = relative.extension().string();
+
+				if (contains(extensionBlacklist, extension))
+					continue;
+
+				if (extensionWhitelist.size() != 0 && !contains(extensionWhitelist, extension))
+					continue;
+
+				assets.push_back(relative.string());
+			}
+		};
+
+		callback(inputDirectory);
 	}
 
 	bool doExport = canUseOutput;
@@ -295,7 +353,7 @@ void init(int argc, char** argv)
 			transforms.push_back(transform2);
 		}
 	}
-
+	
 	for (size_t i = 0; i < hairs.size(); ++i)
 	{
 		hairs[i].asset = Engine::Create<Engine::ModelPackageAsset>();
@@ -348,7 +406,8 @@ void init(int argc, char** argv)
 
 			hairs[i].transform = modelTransform;
 
-			transforms.push_back(hairs[i].transform);
+			if (initVulkan)
+				transforms.push_back(hairs[i].transform);
 
 			std::vector<std::shared_ptr<Transform>> hairTransforms(package.Nodes.size());
 
@@ -472,11 +531,14 @@ void init(int argc, char** argv)
 				}
 			}
 
-			transforms.push_back(hairs[i].transform);
+			if (initVulkan)
+				transforms.push_back(hairs[i].transform);
 
 			hairs[i].transform->SetTransformation(transformation);
 		}
 
+		if (!initVulkan)
+			hairs[i] = hairobj();
 	}
 
 	//hairMeshAsset->SetPath("models/10200238_f_freeconcept020_a.nif", Enum::AssetType::GameAsset, std::ios::binary);
