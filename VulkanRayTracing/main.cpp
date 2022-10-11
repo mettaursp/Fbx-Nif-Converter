@@ -410,8 +410,7 @@ void init(int argc, char** argv)
 			{
 				transforms.push_back(hairs[i].transform);
 
-				if (initVulkan)
-					hairs[i].asset->Instantiate(modelTransform, scene);
+				hairs[i].asset->Instantiate(modelTransform, scene);
 			}
 
 			for (size_t j = 0; j < package.Nodes.size(); ++j)
