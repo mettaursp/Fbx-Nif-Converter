@@ -31,6 +31,7 @@ namespace Engine
 			std::string Diffuse;
 			std::string Normal;
 			std::string Specular;
+			std::string OverrideColor;
 
 			Color3 DiffuseColor = Color3(0.5f, 0.5f, 0.5f);
 			Color3 SpecularColor = Color3(0.5f, 0.5f, 0.5f);

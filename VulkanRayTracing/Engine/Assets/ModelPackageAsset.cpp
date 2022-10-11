@@ -9,6 +9,8 @@ import <sstream>;
 #include <Engine/VulkanGraphics/FileFormats/FbxParser.h>
 #include <Engine/VulkanGraphics/FileFormats/FbxWriter.h>
 #include <Engine/Objects/Transform.h>
+#include <Engine/VulkanGraphics/Scene/Scene.h>
+#include <Engine/VulkanGraphics/Scene/Model.h>
 
 namespace Engine
 {
@@ -23,16 +25,6 @@ namespace Engine
 			NifParser parser;
 			parser.Package = &Package;
 			parser.Parse(file);
-
-			ImportedMeshes.resize(parser.ImportedMeshes.size());
-			MeshTransforms.resize(ImportedMeshes.size());
-
-			for (size_t i = 0; i < parser.ImportedMeshes.size(); ++i)
-			{
-				ImportedMeshes[i] = Engine::Create<Graphics::MeshAsset>();
-				ImportedMeshes[i]->SetMeshData(parser.ImportedMeshes[i].Mesh);
-				MeshTransforms[i] = Engine::Create<Transform>();
-			}
 		}
 		else if (extension == FilePath(".fbx"))
 		{
@@ -40,16 +32,6 @@ namespace Engine
 
 			parser.Package = &Package;
 			parser.Parse(file);
-
-			ImportedMeshes.resize(parser.ImportedMeshes.size());
-			MeshTransforms.resize(ImportedMeshes.size());
-
-			for (size_t i = 0; i < parser.ImportedMeshes.size(); ++i)
-			{
-				ImportedMeshes[i] = Engine::Create<Graphics::MeshAsset>();
-				ImportedMeshes[i]->SetMeshData(parser.ImportedMeshes[i].Mesh);
-				MeshTransforms[i] = parser.ImportedMeshes[i].Transform;
-			}
 		}
 	}
 
@@ -91,5 +73,56 @@ namespace Engine
 	void ModelPackageAsset::Unloading()
 	{
 
+	}
+
+	void ModelPackageAsset::Instantiate(std::shared_ptr<Transform>& parent, std::shared_ptr<Graphics::Scene>& scene)
+	{
+		if (!IsLoaded()) return;
+
+		std::vector<std::shared_ptr<Transform>> transforms(Package.Nodes.size());
+
+		for (size_t j = 0; j < Package.Nodes.size(); ++j)
+		{
+			std::shared_ptr<Transform> transform = Engine::Create<Transform>();
+
+			transform->Name = Package.Nodes[j].Transform->Name;
+			transform->SetTransformation(Package.Nodes[j].Transform->GetTransformation());
+
+			if (Package.Nodes[j].Mesh != nullptr)
+			{
+				if (ImportedMeshes.size() <= j)
+					ImportedMeshes.resize(Package.Nodes.size());
+
+				std::shared_ptr<Graphics::MeshAsset> asset = ImportedMeshes[j];
+				
+				if (asset == nullptr)
+				{
+					asset = Engine::Create<Graphics::MeshAsset>();
+					asset->SetMeshData(Package.Nodes[j].Mesh);
+
+					ImportedMeshes[j] = asset;
+				}
+
+				std::shared_ptr<Graphics::Model> model = Engine::Create<Graphics::Model>();
+				model->MeshAsset = asset;
+				model->SetParent(transform);
+
+				asset->SetParent(model);
+
+				scene->AddObject(model);
+			}
+
+			transforms[j] = transform;
+		}
+
+		for (size_t j = 0; j < transforms.size(); ++j)
+		{
+			if (Package.Nodes[j].AttachedTo == (size_t)-1)
+				transforms[j]->SetParent(parent);
+			else
+				transforms[j]->SetParent(transforms[Package.Nodes[j].AttachedTo]);
+
+			transforms[j]->Update(0);
+		}
 	}
 }

@@ -432,6 +432,8 @@
     <ClInclude Include="Engine\VulkanGraphics\FileFormats\ObjParser.h" />
     <ClInclude Include="Engine\VulkanGraphics\FileFormats\PackageNodes.h" />
     <ClInclude Include="Engine\VulkanGraphics\Scene\Camera.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Scene\DyeablePhongMaterial.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Scene\Material.h" />
     <ClInclude Include="Engine\VulkanGraphics\Scene\MeshAsset.h" />
     <ClInclude Include="Engine\VulkanGraphics\Scene\MeshData.h" />
     <ClInclude Include="Engine\VulkanGraphics\Scene\Model.h" />
