@@ -10,6 +10,7 @@ namespace Engine
 	namespace Graphics
 	{
 		class MeshAsset;
+		class Scene;
 	}
 
 	class ModelPackageAsset : public Asset
@@ -23,6 +24,7 @@ namespace Engine
 		const std::vector<std::shared_ptr<Graphics::MeshAsset>>& GetImportedMeshes() const { return ImportedMeshes; }
 		const std::vector<std::shared_ptr<Transform>>& GetMeshTransforms() const { return MeshTransforms; }
 		const Graphics::ModelPackage& GetPackage() const { return Package; }
+		void Instantiate(std::shared_ptr<Transform>& parent, std::shared_ptr<Graphics::Scene>& scene);
 
 	private:
 		std::vector<std::shared_ptr<Graphics::MeshAsset>> ImportedMeshes;

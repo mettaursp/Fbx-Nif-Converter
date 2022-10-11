@@ -927,38 +927,29 @@ void NifParser::Parse(std::istream& stream)
 
 			if (parentIndex != (size_t)-1)
 			{
-				if (data->BaseTexture.Source != nullptr)
+				const auto fetchPath = [this](const NiTexturingProperty::TextureData& texture) -> const std::string&
 				{
-					parentEntries[data->BaseTexture.Source->BlockIndex] = parentIndex;
-					parentLinkTypes[data->BaseTexture.Source->BlockIndex] = 0;
-				}
+					static const std::string empty("");
 
-				if (data->GlossTexture.Source != nullptr)
+					if (texture.Source == nullptr) return empty;
+
+					const NiSourceTexture* data = texture.Source->GetData<NiSourceTexture>();
+
+					return data->FileName;
+				};
+
+				Package->Materials[parentIndex].Diffuse = fetchPath(data->BaseTexture);
+				Package->Materials[parentIndex].Normal = fetchPath(data->NormalTexture);
+				Package->Materials[parentIndex].Specular = fetchPath(data->GlossTexture);
+
+				if (data->ShaderTextures.size() > 0)
 				{
-					parentEntries[data->GlossTexture.Source->BlockIndex] = parentIndex;
-					parentLinkTypes[data->GlossTexture.Source->BlockIndex] = 2;
-				}
+					if (data->ShaderTextures.size() > 1)
+					{
+						parentIndex += 0;
+					}
 
-				if (data->NormalTexture.Source != nullptr)
-				{
-					parentEntries[data->NormalTexture.Source->BlockIndex] = parentIndex;
-					parentLinkTypes[data->NormalTexture.Source->BlockIndex] = 1;
-				}
-			}
-		}
-		else if (block.BlockType == "NiSourceTexture")
-		{
-			NiSourceTexture* data = block.Data->Cast<NiSourceTexture>();
-
-			auto linkTypeIndex = parentLinkTypes.find(blockIndex);
-
-			if (parentIndex != (size_t)-1 && linkTypeIndex != parentLinkTypes.end())
-			{
-				switch (linkTypeIndex->second)
-				{
-				case 0: Package->Materials[parentIndex].Diffuse = data->FileName; break;
-				case 1: Package->Materials[parentIndex].Normal = data->FileName; break;
-				case 2: Package->Materials[parentIndex].Specular = data->FileName; break;
+					Package->Materials[parentIndex].OverrideColor = fetchPath(data->ShaderTextures[0].Map);
 				}
 			}
 		}

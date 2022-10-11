@@ -449,6 +449,12 @@
     <ClInclude Include="Engine\VulkanGraphics\Scene\SkeletonData.h">
       <Filter>Source Files\GraphicsEngine\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\Material.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\DyeablePhongMaterial.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaderSource\fragment\normalmapconverter.frag" />

@@ -407,38 +407,17 @@ void init(int argc, char** argv)
 			hairs[i].transform = modelTransform;
 
 			if (initVulkan)
+			{
 				transforms.push_back(hairs[i].transform);
 
-			std::vector<std::shared_ptr<Transform>> hairTransforms(package.Nodes.size());
+				if (initVulkan)
+					hairs[i].asset->Instantiate(modelTransform, scene);
+			}
 
 			for (size_t j = 0; j < package.Nodes.size(); ++j)
 			{
-				std::shared_ptr<Transform> transform = Engine::Create<Transform>();
-				
-				transform->Name = package.Nodes[j].Transform->Name;
-				transform->SetTransformation(package.Nodes[j].Transform->GetTransformation());
-
-				if (initVulkan)
-				{
-					std::shared_ptr<Transform> handleTransform = Engine::Create<Transform>();
-					handleTransform->SetInheritsTransformation(false);
-					handleTransform->SetParent(transform);
-					handleTransform->Name = transform->Name + " Handle";
-
-					std::shared_ptr<Engine::Graphics::Model> handleModel = Engine::Create<Engine::Graphics::Model>();
-					handleModel->MeshAsset = handleAsset;
-					handleModel->SetParent(handleTransform);
-
-					scene->AddObject(handleModel);
-
-					handleTransforms.push_back(handleTransform);
-				}
-
 				if (package.Nodes[j].Mesh != nullptr)
 				{
-					std::shared_ptr<Graphics::MeshAsset> asset = Engine::Create<Graphics::MeshAsset>();
-					asset->SetMeshData(package.Nodes[j].Mesh);
-
 					auto index = reportedFormats.find(package.Nodes[j].Format.get());
 
 					if (index == reportedFormats.end())
@@ -464,28 +443,7 @@ void init(int argc, char** argv)
 							}
 						}
 					}
-
-					std::shared_ptr<Graphics::Model> model = Engine::Create<Graphics::Model>();
-					model->MeshAsset = asset;
-					model->SetParent(transform);
-
-					asset->SetParent(model);
-
-					if (initVulkan)
-						scene->AddObject(model);
 				}
-
-				hairTransforms[j] = transform;
-			}
-
-			for (size_t j = 0; j < hairTransforms.size(); ++j)
-			{
-				if (package.Nodes[j].AttachedTo == (size_t)-1)
-					hairTransforms[j]->SetParent(modelTransform);
-				else
-					hairTransforms[j]->SetParent(hairTransforms[package.Nodes[j].AttachedTo]);
-
-				hairTransforms[j]->Update(0);
 			}
 
 			if (package.Materials.size() > 0)
@@ -497,7 +455,8 @@ void init(int argc, char** argv)
 					std::cout << "found new material in loaded package: '" << material.Name << std::endl;
 					std::cout << "\tdiffuse: " << material.Diffuse << std::endl;
 					std::cout << "\tnormal: " << material.Normal << std::endl;
-					std::cout << "\tspecular:" << material.Specular << std::endl;
+					std::cout << "\tspecular: " << material.Specular << std::endl;
+					std::cout << "\toverride: " << material.OverrideColor << std::endl;
 					std::cout << "\tdiffuse color:" << material.DiffuseColor << std::endl;
 					std::cout << "\tspecular color:" << material.SpecularColor << std::endl;
 					std::cout << "\tambient color:" << material.AmbientColor << std::endl;
