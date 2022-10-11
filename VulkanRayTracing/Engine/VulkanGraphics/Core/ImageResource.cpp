@@ -55,6 +55,25 @@ namespace Engine
 			}
 		}
 
+		void ImageResource::CreateEmpty(vk::Format format, int x, int y)
+		{
+			ReleaseData();
+
+			format = vk::Format::eR32G32B32Sfloat;
+			int channels = GetChannels(format);
+
+			if (channels == 0)
+			{
+				vk::Format formats[] = { vk::Format::eUndefined, vk::Format::eR8Unorm, vk::Format::eR8G8Unorm, vk::Format::eR8G8B8Unorm, vk::Format::eR8G8B8A8Unorm };
+
+				Format = formats[channels];
+			}
+
+			Size = Vector2I(x, y);
+			Format = format;
+			Data = new unsigned char [channels*x*y] {0};
+		}
+
 		void ImageResource::CopyData(unsigned char* buffer, vk::SubresourceLayout& layout)
 		{
 			const uint8_t* data = Data;
