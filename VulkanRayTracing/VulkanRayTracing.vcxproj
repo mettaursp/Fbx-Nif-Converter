@@ -179,8 +179,10 @@
   <ItemGroup>
     <ClCompile Include="Engine\VulkanGraphics\Core\BufferFormat.cpp" />
     <ClCompile Include="Engine\VulkanGraphics\Core\RenderTarget.cpp" />
+    <ClCompile Include="Engine\VulkanGraphics\Core\ShaderGroup.cpp" />
     <ClCompile Include="Engine\VulkanGraphics\RenderPipeline\DeferredInputPipeline.cpp" />
     <ClCompile Include="Engine\VulkanGraphics\RenderPipeline\DeferredOutputPipeline.cpp" />
+    <ClCompile Include="Engine\VulkanGraphics\Scene\BatchedDrawOperation.cpp" />
     <ClCompile Include="main.cpp">
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MultiThreadedDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MultiThreadedDLL</RuntimeLibrary>
@@ -408,6 +410,7 @@
     <ClInclude Include="Engine\VulkanGraphics\Core\GraphicsWindow.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\ImageResource.h" />
     <ClInclude Include="Engine\VulkanGraphics\Core\Mesh.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Core\ShaderGroup.h" />
     <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\DeferredInputPipeline.h" />
     <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\DeferredOutputPipeline.h" />
     <ClInclude Include="Engine\VulkanGraphics\RenderPipeline\PhongForwardPipeline.h" />
@@ -431,6 +434,7 @@
     <ClInclude Include="Engine\VulkanGraphics\FileFormats\NifWriter.h" />
     <ClInclude Include="Engine\VulkanGraphics\FileFormats\ObjParser.h" />
     <ClInclude Include="Engine\VulkanGraphics\FileFormats\PackageNodes.h" />
+    <ClInclude Include="Engine\VulkanGraphics\Scene\BatchedSceneDrawOperation.h" />
     <ClInclude Include="Engine\VulkanGraphics\Scene\Camera.h" />
     <ClInclude Include="Engine\VulkanGraphics\Scene\DyeablePhongMaterial.h" />
     <ClInclude Include="Engine\VulkanGraphics\Scene\Material.h" />

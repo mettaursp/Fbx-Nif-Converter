@@ -210,6 +210,12 @@
     <ClCompile Include="Engine\VulkanGraphics\RenderPipeline\DeferredOutputPipeline.cpp">
       <Filter>Source Files\GraphicsEngine\RenderPipeline</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Scene\BatchedDrawOperation.cpp">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\VulkanGraphics\Core\ShaderGroup.cpp">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">
@@ -454,6 +460,12 @@
     </ClInclude>
     <ClInclude Include="Engine\VulkanGraphics\Scene\DyeablePhongMaterial.h">
       <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Scene\BatchedSceneDrawOperation.h">
+      <Filter>Source Files\GraphicsEngine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VulkanGraphics\Core\ShaderGroup.h">
+      <Filter>Source Files\GraphicsEngine\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

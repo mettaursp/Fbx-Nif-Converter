@@ -51,7 +51,7 @@ namespace Engine
 			}
 		}
 
-		BufferObjectUniform::BufferObjectUniform(uint32_t binding) : Uniform(binding)
+		BufferObjectUniform::BufferObjectUniform(uint32_t binding, uint32_t set) : Uniform(binding, set)
 		{
 		}
 

@@ -1,6 +1,7 @@
 #include "ShaderPipeline.h"
 
 import <filesystem>;
+import <map>;
 
 #include "Shader.h"
 #include "VulkanErrorHandling.h"
@@ -243,16 +244,16 @@ namespace Engine
 			InitializedMeshFormat = true;
 		}
 
-		std::shared_ptr<Uniform> MakeUniform(vk::DescriptorType type, uint32_t binding)
+		std::shared_ptr<Uniform> MakeUniform(vk::DescriptorType type, uint32_t binding, uint32_t set)
 		{
 			switch (type)
 			{
 			case vk::DescriptorType::eCombinedImageSampler:
-				return Engine::Create<CombinedSamplerUniform>(binding);
+				return Engine::Create<CombinedSamplerUniform>(binding, set);
 				break;
 
 			case vk::DescriptorType::eUniformBuffer:
-				return Engine::Create<BufferObjectUniform>(binding);
+				return Engine::Create<BufferObjectUniform>(binding, set);
 				break;
 
 			default:
@@ -262,9 +263,9 @@ namespace Engine
 			return nullptr;
 		}
 
-		std::shared_ptr<Uniform> ShaderPipeline::AddUniform(vk::DescriptorType type, uint32_t binding)
+		std::shared_ptr<Uniform> ShaderPipeline::AddUniform(vk::DescriptorType type, uint32_t binding, uint32_t set)
 		{
-			std::shared_ptr<Uniform> uniform = MakeUniform(type, binding);
+			std::shared_ptr<Uniform> uniform = MakeUniform(type, binding, set);
 
 			uniform->AttachToContext(GetContext());
 
@@ -273,9 +274,13 @@ namespace Engine
 			return uniform;
 		}
 
-		const std::shared_ptr<Uniform> ShaderPipeline::GetUniform(int index) const
+		const std::shared_ptr<Uniform> ShaderPipeline::GetUniform(int binding, int set) const
 		{
-			return Uniforms[index];
+			for (const auto& uniform : Uniforms)
+				if (uniform->GetBinding() == binding && uniform->GetSet() == set)
+					return uniform;
+
+			return nullptr;
 		}
 
 		void ShaderPipeline::InitializeDescriptors(size_t bufferCount)
@@ -283,16 +288,47 @@ namespace Engine
 			if (InitializedDescriptors)
 				return;
 
-			DescriptorSets.resize(bufferCount);
+			std::map<vk::DescriptorType, size_t> descriptorPoolMap;
 
-			DescriptorPoolSizes.resize(Uniforms.size());
+			DescriptorPoolSizes.clear();
 
-			for (size_t i = 0; i < Uniforms.size(); ++i)
+			for (const auto& uniform : Uniforms)
 			{
-				DescriptorPoolSizes[i] = vk::DescriptorPoolSize();
-				DescriptorPoolSizes[i].setType(Uniforms[i]->GetType());
-				DescriptorPoolSizes[i].setDescriptorCount((uint32_t)(DescriptorSets.size() * Uniforms[i]->GetSize()));
+				vk::DescriptorType type = uniform->GetType();
+
+				if (type == vk::DescriptorType::eInlineUniformBlockEXT)
+				{
+					for (size_t i = 0; i < bufferCount; ++i)
+					{
+						vk::DescriptorPoolSize size;
+
+						size.setType(type);
+						size.setDescriptorCount((uint32_t)uniform->GetSize());
+
+						DescriptorPoolSizes.push_back(size);
+					}
+				}
+				else
+				{
+					const auto& size = descriptorPoolMap.find(type);
+
+					if (size == descriptorPoolMap.end())
+					{
+						vk::DescriptorPoolSize size;
+
+						size.setType(type);
+						size.setDescriptorCount((uint32_t)bufferCount);
+
+						descriptorPoolMap[type] = DescriptorPoolSizes.size();
+
+						DescriptorPoolSizes.push_back(size);
+					}
+					else
+						DescriptorPoolSizes[size->second].descriptorCount += (uint32_t)bufferCount;
+				}
 			}
+
+			DescriptorSets.resize(DescriptorLayouts.size() * bufferCount);
 
 			auto const descriptor_pool =
 				vk::DescriptorPoolCreateInfo().setMaxSets((uint32_t)DescriptorSets.size()).setPoolSizeCount((uint32_t)DescriptorPoolSizes.size()).setPPoolSizes(DescriptorPoolSizes.data());
@@ -300,10 +336,10 @@ namespace Engine
 			VK_CALL(GetDevice().createDescriptorPool, &descriptor_pool, nullptr, &DescriptorPool);
 
 			auto const alloc_info =
-				vk::DescriptorSetAllocateInfo().setDescriptorPool(DescriptorPool).setDescriptorSetCount(1).setPSetLayouts(&DescriptorLayout);
+				vk::DescriptorSetAllocateInfo().setDescriptorPool(DescriptorPool).setDescriptorSetCount((uint32_t)DescriptorLayouts.size()).setPSetLayouts(DescriptorLayouts.data());
 
-			for (unsigned int i = 0; i < DescriptorSets.size(); i++)
-				VK_CALL(GetDevice().allocateDescriptorSets, &alloc_info, &DescriptorSets[i]);
+			for (unsigned int i = 0; i < bufferCount; i++)
+				VK_CALL(GetDevice().allocateDescriptorSets, &alloc_info, DescriptorSets.data() + (i * DescriptorSetCount));
 
 			InitializedDescriptors = true;
 		}
@@ -330,7 +366,7 @@ namespace Engine
 				write.setPImageInfo(Uniforms[i]->GetImageInfo());
 				write.setPBufferInfo(Uniforms[i]->GetBufferInfo());
 				write.setPTexelBufferView(Uniforms[i]->GetBufferViews());
-				write.setDstSet(DescriptorSets[CurrentBuffer]);
+				write.setDstSet(DescriptorSets[CurrentBuffer * DescriptorSetCount + Uniforms[i]->GetSet()]);
 
 				Uniforms[i]->ClearStale();
 			}
@@ -446,21 +482,55 @@ namespace Engine
 				return;
 				//ResetBindings();
 
-			BindingInfo.resize(Bindings.size());
+			DescriptorSetCount = 0;
 
-			for (size_t i = 0; i < BindingInfo.size(); ++i)
+			for (size_t i = 0; i < Bindings.size(); ++i)
 			{
-				BindingInfo[i] = vk::DescriptorSetLayoutBinding();
-				BindingInfo[i].setBinding((uint32_t)i);
-				BindingInfo[i].setDescriptorType(Bindings[i].Type);
-				BindingInfo[i].setDescriptorCount(Bindings[i].Count);
-				BindingInfo[i].setStageFlags(Bindings[i].ActiveStages);
-				BindingInfo[i].setPImmutableSamplers(Bindings[i].ImmutableSamplers.size() == 0 ? nullptr : Bindings[i].ImmutableSamplers.data());
+				auto& binding = Bindings[i];
+
+				if (DescriptorSetCount <= binding.DescriptorSetIndex)
+				{
+					DescriptorSetCount = binding.DescriptorSetIndex + 1;
+
+					DescriptorLayouts.resize(DescriptorSetCount);
+					DescriptorLayoutInfo.resize(DescriptorSetCount);
+				}
+
+				++DescriptorLayoutInfo[binding.DescriptorSetIndex].DescriptorCount;
 			}
 
-			auto const descriptor_layout = vk::DescriptorSetLayoutCreateInfo().setBindingCount((uint32_t)BindingInfo.size()).setPBindings(BindingInfo.data());
+			BindingInfo.resize(Bindings.size());
 
-			VK_CALL(GetDevice().createDescriptorSetLayout, &descriptor_layout, nullptr, &DescriptorLayout);
+			size_t offset = 0;
+
+			for (size_t i = 0; i < DescriptorLayouts.size(); ++i)
+			{
+				auto& descriptorLayoutInfo = DescriptorLayoutInfo[i];
+				auto& descriptorLayout = DescriptorLayouts[i];
+
+				descriptorLayoutInfo.DescriptorStartIndex = offset;
+
+				for (size_t j = 0; j < Bindings.size(); ++j)
+				{
+					auto& binding = Bindings[j];
+					auto& bindingInfo = BindingInfo[offset];
+
+					if (binding.DescriptorSetIndex != i) continue;
+
+					bindingInfo = vk::DescriptorSetLayoutBinding();
+					bindingInfo.setBinding(binding.Binding);
+					bindingInfo.setDescriptorType(binding.Type);
+					bindingInfo.setDescriptorCount(binding.Count);
+					bindingInfo.setStageFlags(binding.ActiveStages);
+					bindingInfo.setPImmutableSamplers(binding.ImmutableSamplers.size() == 0 ? nullptr : binding.ImmutableSamplers.data());
+
+					++offset;
+				}
+
+				auto const descriptor_layout = vk::DescriptorSetLayoutCreateInfo().setBindingCount((uint32_t)descriptorLayoutInfo.DescriptorCount).setPBindings(BindingInfo.data() + descriptorLayoutInfo.DescriptorStartIndex);
+				
+				VK_CALL(GetDevice().createDescriptorSetLayout, &descriptor_layout, nullptr, &descriptorLayout);
+			}
 
 			vk::PushConstantRange pushConstantRange{
 				PushConstantAccess,
@@ -468,7 +538,7 @@ namespace Engine
 				(uint32_t)PushConstantSize
 			};
 
-			auto pPipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo().setSetLayoutCount(1).setPSetLayouts(&DescriptorLayout);
+			auto pPipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo().setSetLayoutCount((uint32_t)DescriptorSetCount).setPSetLayouts(DescriptorLayouts.data());
 
 			if (PushConstantSize > 0)
 				pPipelineLayoutCreateInfo.setPushConstantRangeCount(1).setPPushConstantRanges(&pushConstantRange);
@@ -484,7 +554,16 @@ namespace Engine
 
 			PushConstantSize = false;
 			GetDevice().destroyPipelineLayout(PipelineLayout, nullptr);
-			GetDevice().destroyDescriptorSetLayout(DescriptorLayout, nullptr);
+
+			for (size_t i = 0; i < DescriptorLayouts.size(); ++i)
+			{
+				auto& descriptorLayoutInfo = DescriptorLayoutInfo[i];
+
+				GetDevice().destroyDescriptorSetLayout(DescriptorLayouts[i], nullptr);
+
+				descriptorLayoutInfo.DescriptorCount = 0;
+				descriptorLayoutInfo.DescriptorStartIndex = 0;
+			}
 
 			InitializedBindings = false;
 		}

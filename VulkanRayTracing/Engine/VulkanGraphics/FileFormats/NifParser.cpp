@@ -4,6 +4,7 @@ import <string>;
 import <vector>;
 import <map>;
 import <set>;
+import <cstring>;
 
 #include <Engine/Math/Vector3S.h>
 #include <Engine/Math/Vector2S.h>
@@ -348,6 +349,32 @@ void NifDocument::ParseStream(std::istream& stream, BlockData& block)
 	data->Streamable = Endian.read<char>(stream);
 }
 
+Color3 NifDocument::ParseColor3(std::istream& stream)
+{
+	return Color3(
+		Endian.read<float>(stream),
+		Endian.read<float>(stream),
+		Endian.read<float>(stream)
+	);
+}
+
+Color4 NifDocument::ParseColor4(std::istream& stream)
+{
+	float channels[4] = {
+		Endian.read<float>(stream),
+		Endian.read<float>(stream),
+		Endian.read<float>(stream),
+		Endian.read<float>(stream)
+	};
+
+	return Color4(
+		channels[0],
+		channels[1],
+		channels[2],
+		channels[3]
+	);
+}
+
 void NifDocument::ParseMaterialProperty(std::istream& stream, BlockData& block)
 {
 	NiMaterialProperty* data = block.AddData<NiMaterialProperty>();
@@ -355,10 +382,10 @@ void NifDocument::ParseMaterialProperty(std::istream& stream, BlockData& block)
 	ReadBlockRefs(stream, block, data->ExtraData);
 
 	data->Controller = FetchRef(stream);
-	data->AmbientColor = Endian.read<Color3>(stream);
-	data->DiffuseColor = Endian.read<Color3>(stream);
-	data->SpecularColor = Endian.read<Color3>(stream);
-	data->EmissiveColor = Endian.read<Color3>(stream);
+	data->AmbientColor = ParseColor3(stream);
+	data->DiffuseColor = ParseColor3(stream);
+	data->SpecularColor = ParseColor3(stream);
+	data->EmissiveColor = ParseColor3(stream);
 	data->Glossiness = Endian.read<float>(stream);
 	data->Alpha = Endian.read<float>(stream);
 }
@@ -561,6 +588,20 @@ void NifDocument::ParseTextKeyExtraData(std::istream& stream, BlockData& block)
 	}
 }
 
+void NifDocument::ParseColorExtraData(std::istream& stream, BlockData& block)
+{
+	NiColorExtraData* data = block.AddData<NiColorExtraData>();
+
+	data->Value = ParseColor4(stream);
+}
+
+void NifDocument::ParseFloatExtraData(std::istream& stream, BlockData& block)
+{
+	NiFloatExtraData* data = block.AddData<NiFloatExtraData>();
+
+	data->Value = Endian.read<float>(stream);
+}
+
 void NifDocument::ParserNoOp(std::istream& stream, BlockData& block)
 {
 	char buffer[0xFFF];
@@ -590,6 +631,8 @@ std::map<std::string, NifDocument::BlockParseFunction> parserFunctions = {
 	{ "NiTransformEvaluator", &NifDocument::ParseTransformEvaluator },
 	{ "NiTransformData", &NifDocument::ParseTransformData },
 	{ "NiTextKeyExtraData", &NifDocument::ParseTextKeyExtraData },
+	{ "NiColorExtraData", &NifDocument::ParseColorExtraData },
+	{ "NiFloatExtraData", &NifDocument::ParseFloatExtraData },
 };
 
 std::set<std::string> ignoreBlockName = {
@@ -813,11 +856,16 @@ void NifParser::Parse(std::istream& stream)
 						{
 							materialIndex = Package->Materials.size();
 							parentEntries[data->Properties[i]->BlockIndex] = materialIndex;
-							Package->Materials.push_back(ModelPackageMaterial{ data->Materials[0] });
+							Package->Materials.push_back(ModelPackageMaterial{ "", data->Materials[0]});
 						}
 						else
 							materialIndex = textureIndex->second;
 					}
+				}
+
+				for (size_t i = 0; i < data->ExtraData.size(); ++i)
+				{
+					parentEntries[data->ExtraData[i]->BlockIndex] = materialIndex;
 				}
 
 				if (materialIndex != (size_t)-1)
@@ -959,6 +1007,7 @@ void NifParser::Parse(std::istream& stream)
 
 			if (parentIndex != (size_t)-1)
 			{
+				Package->Materials[parentIndex].Name = block.BlockName;
 				Package->Materials[parentIndex].DiffuseColor = data->DiffuseColor;
 				Package->Materials[parentIndex].SpecularColor = data->SpecularColor;
 				Package->Materials[parentIndex].AmbientColor = data->AmbientColor;
@@ -966,6 +1015,48 @@ void NifParser::Parse(std::istream& stream)
 				Package->Materials[parentIndex].Shininess = data->Glossiness;
 				Package->Materials[parentIndex].Alpha = data->Alpha;
 			}
+		}
+		else if (block.BlockType == "NiColorExtraData")
+		{
+			NiColorExtraData* data = block.Data->Cast<NiColorExtraData>();
+
+			if (block.BlockName.size() != 14 && strncmp(block.BlockName.c_str(), "OverrideColor", 13))
+				continue;
+
+			char overrideSlot = block.BlockName[13];
+
+			if (overrideSlot < '0' || overrideSlot > '2')
+				continue;
+
+			overrideSlot -= '0';
+
+			if (parentIndex != (size_t)-1)
+			{
+				switch (overrideSlot)
+				{
+				case 0:
+					Package->Materials[parentIndex].OverrideColor0 = data->Value;
+					break;
+				case 1:
+					Package->Materials[parentIndex].OverrideColor1 = data->Value;
+					break;
+				case 2:
+					Package->Materials[parentIndex].OverrideColor2 = data->Value;
+					break;
+				default: break;
+				}
+			}
+		}
+		else if (block.BlockType == "NiFloatExtraData")
+		{
+			NiFloatExtraData* data = block.Data->Cast<NiFloatExtraData>();
+
+			if (parentIndex == (size_t)-1) continue;
+
+			if (block.BlockName == "FresnelBoost")
+				Package->Materials[parentIndex].FresnelBoost = data->Value;
+			else if (block.BlockName == "FresnelExponent")
+				Package->Materials[parentIndex].FresnelExponent = data->Value;
 		}
 	}
 

@@ -29,6 +29,7 @@ namespace Engine
 			vk::PhysicalDeviceProperties GpuProperties;
 			vk::PhysicalDeviceFeatures GpuFeatures;
 			vk::PhysicalDeviceMemoryProperties GpuMemoryProperties;
+			vk::PhysicalDeviceDescriptorIndexingFeaturesEXT DescriptorIndexingFeatures;
 			vk::Queue GraphicsQueue;
 			vk::Queue PresentQueue;
 			QueuePropertyVector GpuQueueProperties;
@@ -81,8 +82,8 @@ namespace Engine
 			StringBuffer LayerPropertiesBuffer;
 			StringBuffer DeviceExtensionsBuffer;
 			StringBuffer InstanceExtensionsBuffer;
-			StringVector LayerProperties = { /*"VK_LAYER_KHRONOS_validation"*/ };
-			StringVector DeviceExtensions = { "VK_KHR_swapchain" };
+			StringVector LayerProperties = { "VK_LAYER_KHRONOS_validation" };
+			StringVector DeviceExtensions = { "VK_KHR_swapchain", "VK_KHR_maintenance3", "VK_EXT_descriptor_indexing" };
 			StringVector InstanceExtensions = { "VK_KHR_surface", "VK_KHR_win32_surface", "VK_KHR_get_physical_device_properties2" };
 
 			int PrimaryDevice = 0;

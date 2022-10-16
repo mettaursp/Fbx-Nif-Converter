@@ -19,7 +19,7 @@ layout(location = 0) out vec3 outuvs;
 layout(location = 1) out vec4 outpos;
 layout(location = 2) out vec3 outnorm;
 
-layout(binding = 2) uniform SceneInfo
+layout(set = 0, binding = 0) uniform SceneInfo
 {
 	float time;
 } sceneInfo;

@@ -22,10 +22,19 @@ namespace Engine
 			const Vector2I& GetSize() const { return Size; }
 			const unsigned char* GetData() const { return Data; }
 			vk::Format GetFormat() const { return Format; }
+			bool IsDDS() const { return DDSTexture; }
+			int GetBlockSize() const { return BlockSize; }
+			unsigned int GetMipMapCount() { return MipMapCount; }
 
 			void CopyData(unsigned char* buffer, vk::SubresourceLayout& layout);
 
 		private:
+			vk::Format LoadDDS(const char* path);
+
+			unsigned int MipMapCount = 1;
+			int BlockSize = 16;
+			bool DDSTexture = false;
+			unsigned int DataSize = 0;
 			unsigned char* Data = nullptr;
 			Vector2I Size;
 			vk::Format Format = vk::Format::eUndefined;

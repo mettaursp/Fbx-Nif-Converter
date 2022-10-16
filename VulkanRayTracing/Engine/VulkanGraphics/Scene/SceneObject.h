@@ -10,6 +10,7 @@ namespace Engine
 		class MeshAsset;
 		class RenderQueue;
 		class Camera;
+		class Material;
 
 		struct SceneObjectPushConstants
 		{
@@ -20,6 +21,7 @@ namespace Engine
 		class SceneObject : public Object
 		{
 		public:
+			std::shared_ptr<Material> Material;
 
 			virtual void Draw(RenderQueue& queue, const Camera* camera) const {}
 

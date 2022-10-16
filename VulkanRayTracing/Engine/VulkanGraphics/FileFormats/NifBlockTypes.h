@@ -264,6 +264,8 @@ struct NiMaterialProperty : public NiDataBlock
 	Color3 EmissiveColor = Color3(0.f, 0.f, 0.f);
 	float Glossiness = 10;
 	float Alpha = 1;
+	float FresnelBoost = 1;
+	float FresnelExponent = 1;
 };
 
 struct NiTexturingProperty : public NiDataBlock
@@ -705,6 +707,8 @@ struct NifDocument
 	void ParseSourceTexture(std::istream& stream, BlockData& block);
 	void ParseTexturingProperty(std::istream& stream, BlockData& block);
 	void ParseTransform(std::istream& stream, NiTransform& transform, bool translationFirst = true, bool isQuaternion = false);
+	Color3 ParseColor3(std::istream& stream);
+	Color4 ParseColor4(std::istream& stream);
 	void ParseBounds(std::istream& stream, NiBounds& bounds);
 	void ParseMesh(std::istream& stream, BlockData& block);
 	void ParseNode(std::istream& stream, BlockData& block);
@@ -718,6 +722,8 @@ struct NifDocument
 	void ParseTransformEvaluator(std::istream& stream, BlockData& block);
 	void ParseTransformData(std::istream& stream, BlockData& block);
 	void ParseTextKeyExtraData(std::istream& stream, BlockData& block);
+	void ParseColorExtraData(std::istream& stream, BlockData& block);
+	void ParseFloatExtraData(std::istream& stream, BlockData& block);
 
 	void WriteNode(std::ostream& stream, BlockData& block);
 	void WriteMesh(std::ostream& stream, BlockData& block);

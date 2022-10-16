@@ -73,6 +73,9 @@ namespace Engine
 
 			Graphics::RenderQueue& queue = GetRenderQueue();
 
+			if (queue.CommandBuffer == vk::CommandBuffer())
+				return;
+
 			queue.StartFrame();
 
 			for (size_t i = 0; i < AttachedRenderers.size(); ++i)
@@ -124,15 +127,22 @@ namespace Engine
 			for (size_t i = 0; i < AttachedRenderers.size(); ++i)
 				AttachedRenderers[i]->Prepare(This.lock()->Cast<SwapChain>());
 
+			bool reinitialized = false;
+
 			for (size_t i = 0; i < AttachedRenderers.size(); ++i)
 			{
 				if (AttachedRenderers[i]->OutputsToSwapChain())
 				{
+					reinitialized = true;
+
 					Reinitialize(nullptr, AttachedRenderers[i]->GetOutputProgram()->GetPipeline());
 
 					break;
 				}
 			}
+
+			if (!reinitialized)
+				Reinitialize(nullptr, nullptr);
 
 			Window->FlushCommands();
 		}
@@ -149,7 +159,9 @@ namespace Engine
 		{
 			InitializeImages(window);
 			InitializeCommandBuffers();
-			InitializeFrameBuffers(pipeline);
+
+			if (pipeline != nullptr)
+				InitializeFrameBuffers(pipeline);
 		}
 
 		void SwapChain::InitializeImages(const std::shared_ptr<GraphicsWindow>& window)

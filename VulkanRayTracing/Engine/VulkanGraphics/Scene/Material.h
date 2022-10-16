@@ -6,6 +6,8 @@ namespace Engine
 {
 	namespace Graphics
 	{
+		class ShaderGroup;
+
 		struct MaterialProperties
 		{
 
@@ -14,7 +16,7 @@ namespace Engine
 		class Material : public Object
 		{
 		public:
-
+			std::shared_ptr<ShaderGroup> ShaderGroup;
 
 		private:
 
