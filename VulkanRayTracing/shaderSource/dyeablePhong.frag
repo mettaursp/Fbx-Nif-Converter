@@ -4,6 +4,14 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 layout(binding = 0) uniform sampler2D albedoTexture;
+layout(binding = 1) uniform sampler2D specularTexture;
+layout(binding = 2) uniform sampler2D normalTexture;
+layout(binding = 3) uniform sampler2D overrideTexture;
+
+layout(binding = 4) uniform Material
+{
+    vec4 colorOverride0;
+} material;
 
 layout(location = 0) in vec3 uvs;
 layout(location = 1) in vec4 pos;

@@ -85,8 +85,8 @@ namespace Engine
 
 		void RenderQueue::DrawMesh(const std::shared_ptr<Mesh>& mesh)
 		{
-			CommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, BoundPipeline->GetPipelineLayout(), 0, 1,
-				&BoundPipeline->GetDescriptorSet(Owner->GetCurrentBuffer()), 0, nullptr);
+			const vk::DescriptorSet* descriptorSets = BoundPipeline->GetDescriptorSets();
+			CommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, BoundPipeline->GetPipelineLayout(), 0, (uint32_t)BoundPipeline->GetDescriptorSetCount(), descriptorSets, 0, nullptr);
 			vk::DeviceSize offsets[0xF] = {};
 			CommandBuffer.bindVertexBuffers(0, (uint32_t)mesh->GetBindings(), mesh->GetVertexBuffers(), offsets);
 			CommandBuffer.bindIndexBuffer(*mesh->GetIndexBuffer(), 0, vk::IndexType::eUint32);

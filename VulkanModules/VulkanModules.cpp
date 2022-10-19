@@ -28,6 +28,7 @@ import <cstdlib>;
 import <csignal>;
 import <cstring>;
 import <ostream>;
+import <algorithm>;
 
 // TODO: This is an example of a library function
 void fnVulkanModules()

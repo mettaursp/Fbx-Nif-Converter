@@ -11,6 +11,8 @@ namespace Engine
 
 	ObjectHandleHeap ObjectIDs;
 
+	std::shared_ptr<Object> Null = nullptr;
+
 	unsigned long long Object::ObjectsCreated = 0;
 
 	void Object::Initialize()

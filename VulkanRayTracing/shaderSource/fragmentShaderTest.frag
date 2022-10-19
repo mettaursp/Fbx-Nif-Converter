@@ -2,8 +2,13 @@
 
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
+#extension GL_EXT_nonuniform_qualifier : enable
 
-layout(binding = 1) uniform sampler2D albedoTexture;
+layout(set = 2, binding = 0) uniform ObjectInfo
+{
+	int materialIndex;
+} objectInfo;
+layout(set = 1, binding = 0) uniform sampler2D albedoTexture;
 
 layout(location = 0) in vec3 uvs;
 layout(location = 1) in vec4 pos;
@@ -23,7 +28,7 @@ void main()
 	
 	vec3 look = -normalize(fragPos);
 	vec3 light = normalize(lightPos - fragPos);
-	vec3 albedo = texture(albedoTexture, uvs.xy).xyz;
+	vec3 albedo = texture(albedoTexture/*[objectInfo.materialIndex]*/, uvs.xy).xyz;
 	
 	vec3 diffuse = 0.5 * max(dot(light, normal), 0) * albedo * lightColor;
 	vec3 specular = 0.5* max(dot(normalize(light + look), normal), 0) * lightColor;

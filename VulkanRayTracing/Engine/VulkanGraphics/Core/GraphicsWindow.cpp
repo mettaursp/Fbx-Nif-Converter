@@ -126,6 +126,8 @@ namespace Engine
 
 			Context = context;
 
+			StagingTexture->AttachToContext(context);
+
 			Graphics::DeviceContext& deviceContext = context->GetDevice(selectedDevice);
 
 			InitializeSurface(context, deviceContext);

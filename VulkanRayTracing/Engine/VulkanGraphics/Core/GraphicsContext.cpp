@@ -95,6 +95,10 @@ namespace Engine
 			queues[0].setQueueCount(1);
 			queues[0].setPQueuePriorities(priorities);
 
+			DescriptorIndexingFeatures.setShaderSampledImageArrayNonUniformIndexing(VK_TRUE);
+			DescriptorIndexingFeatures.setRuntimeDescriptorArray(VK_TRUE);
+			DescriptorIndexingFeatures.setDescriptorBindingVariableDescriptorCount(VK_TRUE);
+
 			vk::DeviceCreateInfo deviceInfo = vk::DeviceCreateInfo();
 
 			deviceInfo.setQueueCreateInfoCount(1);
@@ -104,6 +108,7 @@ namespace Engine
 			deviceInfo.setEnabledExtensionCount(uint32_t(Extensions.size()) - 1);
 			deviceInfo.setPpEnabledExtensionNames((const char* const*)Extensions.data());
 			deviceInfo.setPEnabledFeatures(nullptr);
+			deviceInfo.setPNext(&DescriptorIndexingFeatures);
 
 			if (SeparatePresentQueue)
 			{

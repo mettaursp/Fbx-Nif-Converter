@@ -181,10 +181,10 @@ namespace Engine
 			AddDependency(depthDependency);
 			AddDependency(imageLayoutTransitionDependency);
 
-			std::shared_ptr<CombinedSamplerUniform> sampler = AddUniform(vk::DescriptorType::eCombinedImageSampler, 1)->Cast<Graphics::CombinedSamplerUniform>();
+			std::shared_ptr<CombinedSamplerUniform> sampler = AddUniform(vk::DescriptorType::eCombinedImageSampler, 0, 0)->Cast<Graphics::CombinedSamplerUniform>();
 			sampler->SetCount(1);
 
-			std::shared_ptr<BufferObjectUniform> buffer = AddUniform(vk::DescriptorType::eUniformBuffer, 2)->Cast<Graphics::BufferObjectUniform>();
+			std::shared_ptr<BufferObjectUniform> buffer = AddUniform(vk::DescriptorType::eUniformBuffer, 0, 0)->Cast<Graphics::BufferObjectUniform>();
 			buffer->InitializeData();
 
 			InitializeDescriptors(3);

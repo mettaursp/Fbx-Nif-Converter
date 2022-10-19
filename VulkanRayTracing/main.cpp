@@ -45,6 +45,7 @@ import <set>;
 #include <Engine/VulkanGraphics/RenderPipeline/DeferredInputPipeline.h>
 #include <Engine/VulkanGraphics/Core/ShaderProgram.h>
 #include <Engine/VulkanGraphics/Core/GraphicsRenderer.h>
+#include <Engine/VulkanGraphics/Core/ShaderGroup.h>
 #include <Engine/VulkanGraphics/Scene/MeshAsset.h>
 
 
@@ -55,6 +56,7 @@ import <set>;
 #include <Engine/VulkanGraphics/Scene/Model.h>
 #include <Engine/Objects/Transform.h>
 #include <Engine/VulkanGraphics/Scene/SceneDrawOperation.h>
+#include <Engine/VulkanGraphics/Scene/BatchedSceneDrawOperation.h>
 #include <Engine/VulkanGraphics/Scene/Scene.h>
 #include <Engine/Assets/ModelPackageAsset.h>
 
@@ -80,10 +82,11 @@ std::shared_ptr<Transform> transform1;
 std::shared_ptr<Graphics::Model> model2;
 std::shared_ptr<Transform> transform2;
 std::shared_ptr<Graphics::PhongForwardPipeline> phongForward;
+std::shared_ptr<Graphics::ShaderGroup> phongShaderGroup;
 std::shared_ptr<Graphics::DeferredInputPipeline> deferredInput;
 std::shared_ptr<Graphics::FrameBuffer> gBuffer;
 std::shared_ptr<Graphics::Scene> scene;
-std::shared_ptr<Graphics::SceneDrawOperation> drawOperation;
+std::shared_ptr<Graphics::BatchedSceneDrawOperation> drawOperation;
 std::shared_ptr<Graphics::ShaderProgram> program;
 std::shared_ptr<Graphics::GraphicsRenderer> renderer;
 
@@ -140,8 +143,6 @@ void draw()
 		handleTransforms[i]->SetTransformation(transformation * Matrix4::NewScale(0.1f, 0.1f, 0.1f));
 		handleTransforms[i]->Update(0);
 	}
-
-	std::cout << rotation.ExtractEulerAngles() << std::endl;
 }
 struct hairobj
 {
@@ -320,7 +321,7 @@ void init(int argc, char** argv)
 		camera->proj = viewProj;
 
 		scene = Engine::Create<Graphics::Scene>();
-		drawOperation = Engine::Create<Graphics::SceneDrawOperation>();
+		drawOperation = Engine::Create<Graphics::BatchedSceneDrawOperation>();
 		drawOperation->TargetScene = scene;
 		drawOperation->ViewCamera = camera;
 
@@ -370,6 +371,16 @@ void init(int argc, char** argv)
 
 		std::cout << "imported '" << (inputDirectory + assets[i]) << "'" << std::endl;
 
+		Graphics::ModelPackage& package = hairs[i].asset->GetPackage();
+
+		for (auto& material : package.Materials)
+		{
+			if (material.ShaderName == "MS2CharacterMaterial" || material.ShaderName == "MS2CharacterHairMaterial" || material.ShaderName == "MS2CharacterSkinMaterial")
+				material.ShaderGroup = phongShaderGroup;
+			else
+				material.ShaderGroup = phongShaderGroup;
+		}
+
 		if (doExport)
 		{
 			std::filesystem::path fileName(assets[i]);
@@ -390,7 +401,6 @@ void init(int argc, char** argv)
 
 		const std::vector<std::shared_ptr<Graphics::MeshAsset>>& meshes = hairs[i].asset->GetImportedMeshes();
 		const std::vector<std::shared_ptr<Transform>>& meshTransforms = hairs[i].asset->GetMeshTransforms();
-		const Graphics::ModelPackage& package = hairs[i].asset->GetPackage();
 
 		int x = (int)i % 3;
 		int y = (int)i / 3;
@@ -409,8 +419,6 @@ void init(int argc, char** argv)
 			if (initVulkan)
 			{
 				transforms.push_back(hairs[i].transform);
-
-				hairs[i].asset->Instantiate(modelTransform, scene);
 			}
 
 			for (size_t j = 0; j < package.Nodes.size(); ++j)
@@ -451,7 +459,8 @@ void init(int argc, char** argv)
 				{
 					const Engine::Graphics::ModelPackageMaterial& material = package.Materials[j];
 
-					std::cout << "found new material in loaded package: '" << material.Name << std::endl;
+					std::cout << "found new material in loaded package: " << material.Name << std::endl;
+					std::cout << "\tshaders: " << material.ShaderName << std::endl;
 					std::cout << "\tdiffuse: " << material.Diffuse << std::endl;
 					std::cout << "\tnormal: " << material.Normal << std::endl;
 					std::cout << "\tspecular: " << material.Specular << std::endl;
@@ -459,8 +468,13 @@ void init(int argc, char** argv)
 					std::cout << "\tdiffuse color:" << material.DiffuseColor << std::endl;
 					std::cout << "\tspecular color:" << material.SpecularColor << std::endl;
 					std::cout << "\tambient color:" << material.AmbientColor << std::endl;
+					std::cout << "\toverride color 0:" << material.OverrideColor0 << std::endl;
+					std::cout << "\toverride color 1:" << material.OverrideColor1 << std::endl;
+					std::cout << "\toverride color 2:" << material.OverrideColor2 << std::endl;
 					std::cout << "\temissive color:" << material.EmissiveColor << std::endl;
 					std::cout << "\tshininess exponent:" << material.Shininess << std::endl;
+					std::cout << "\tfresnel boost:" << material.FresnelBoost << std::endl;
+					std::cout << "\tfresnel exponent:" << material.FresnelExponent << std::endl;
 					std::cout << "\talpha:" << material.Alpha << std::endl;
 				}
 			}
@@ -514,6 +528,8 @@ void init(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+	phongShaderGroup = Engine::Create<Graphics::ShaderGroup>();
+
 	init(argc, argv);
 
 	if (!initVulkan)
@@ -535,18 +551,32 @@ int main(int argc, char** argv)
 	swapChain = window->ViewSwapChain;
 	swapChain->AddRenderer(renderer);
 
+	if (initVulkan)
+	{
+		for (size_t i = 0; i < hairs.size(); ++i)
+		{
+			hairs[i].asset->GraphicsContext = context;
+			hairs[i].asset->GraphicsWindow = window;
+			hairs[i].asset->InstantiateMaterials(Engine::Null);
+			hairs[i].asset->InstantiateTextures(Engine::Null);
+			hairs[i].asset->Instantiate(hairs[i].transform, scene);
+		}
+	}
+
 	//if (loadTestModels)
-		for (uint32_t i = 0; i < textures.size(); i++)
-			textures[i]->LoadResource(testimage, window);
+	for (uint32_t i = 0; i < textures.size(); i++)
+		textures[i]->LoadResource(testimage, window);
 
 	phongForward = Engine::Create<Graphics::PhongForwardPipeline>();
 	phongForward->AttachToContext(context);
 	phongForward->ColorFormat = window->GetSurfaceFormat();
 	phongForward->Configure();
-	sampler = dynamic_cast<Graphics::CombinedSamplerUniform*>(phongForward->GetUniform(0).get());
-	sceneInfo = dynamic_cast<Graphics::BufferObjectUniform*>(phongForward->GetUniform(1).get());
+	sampler = dynamic_cast<Graphics::CombinedSamplerUniform*>(phongForward->GetUniform(0, 1).get());
+	sceneInfo = dynamic_cast<Graphics::BufferObjectUniform*>(phongForward->GetUniform(0, 0).get());
 	
 	program->SetPipeline(phongForward);
+
+	phongShaderGroup->ForwardShading = phongForward;
 
 	//deferredInput = Engine::Create<Graphics::DeferredInputPipeline>();
 	//deferredInput->AttachToContext(context);

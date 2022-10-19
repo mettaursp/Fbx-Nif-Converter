@@ -1,6 +1,7 @@
 #include "ModelPackageAsset.h"
 
 import <sstream>;
+import <filesystem>;
 
 #include <Engine/VulkanGraphics/Scene/MeshAsset.h>
 #include <Engine/VulkanGraphics/Scene/MeshData.h>
@@ -11,6 +12,9 @@ import <sstream>;
 #include <Engine/Objects/Transform.h>
 #include <Engine/VulkanGraphics/Scene/Scene.h>
 #include <Engine/VulkanGraphics/Scene/Model.h>
+#include <Engine/VulkanGraphics/Core/Texture.h>
+#include <Engine/VulkanGraphics/Core/ImageResource.h>
+#include <Engine/VulkanGraphics/Scene/DyeablePhongMaterial.h>
 
 namespace Engine
 {
@@ -83,12 +87,14 @@ namespace Engine
 
 		for (size_t j = 0; j < Package.Nodes.size(); ++j)
 		{
+			Graphics::ModelPackageNode& node = Package.Nodes[j];
+
 			std::shared_ptr<Transform> transform = Engine::Create<Transform>();
 
-			transform->Name = Package.Nodes[j].Transform->Name;
-			transform->SetTransformation(Package.Nodes[j].Transform->GetTransformation());
+			transform->Name = node.Transform->Name;
+			transform->SetTransformation(node.Transform->GetTransformation());
 
-			if (Package.Nodes[j].Mesh != nullptr)
+			if (node.Mesh != nullptr)
 			{
 				if (ImportedMeshes.size() <= j)
 					ImportedMeshes.resize(Package.Nodes.size());
@@ -98,13 +104,14 @@ namespace Engine
 				if (asset == nullptr)
 				{
 					asset = Engine::Create<Graphics::MeshAsset>();
-					asset->SetMeshData(Package.Nodes[j].Mesh);
+					asset->SetMeshData(node.Mesh);
 
 					ImportedMeshes[j] = asset;
 				}
 
 				std::shared_ptr<Graphics::Model> model = Engine::Create<Graphics::Model>();
 				model->MeshAsset = asset;
+				model->Material = node.MaterialIndex != -1 ? Package.Materials[node.MaterialIndex].Material : nullptr;
 				model->SetParent(transform);
 
 				asset->SetParent(model);
@@ -123,6 +130,68 @@ namespace Engine
 				transforms[j]->SetParent(transforms[Package.Nodes[j].AttachedTo]);
 
 			transforms[j]->Update(0);
+		}
+	}
+
+	void ModelPackageAsset::InstantiateTextures(std::shared_ptr<Object>& parent)
+	{
+		auto loadTexture = [this](const std::string& path) -> std::shared_ptr<Graphics::Texture>
+		{
+			if (path == "") return nullptr;
+
+			std::filesystem::path fullPath = GetDirectoryPath();
+			fullPath += path;
+
+			if (!std::filesystem::exists(fullPath)) return nullptr;
+
+			std::shared_ptr<Graphics::ImageResource> resource = Engine::Create<Graphics::ImageResource>();
+
+			resource->Load(fullPath.string().c_str());
+
+			std::shared_ptr<Graphics::Texture> texture = Engine::Create<Graphics::Texture>();
+
+			texture->AttachToContext(GraphicsContext);
+			texture->LoadResource(resource, GraphicsWindow);
+
+			return texture;
+		};
+
+		for (size_t j = 0; j < Package.Materials.size(); ++j)
+		{
+			Graphics::ModelPackageMaterial& material = Package.Materials[j];
+
+			material.DiffuseTexture = loadTexture(material.Diffuse);
+			material.SpecularTexture = loadTexture(material.Specular);
+			material.NormalTexture = loadTexture(material.Normal);
+			material.OverrideColorTexture = loadTexture(material.OverrideColor);
+
+			if (material.Material != nullptr)
+			{
+				std::shared_ptr<Graphics::DyeablePhongMaterial> materialData = material.Material->Cast<Graphics::DyeablePhongMaterial>();
+				
+				materialData->Albedo = material.DiffuseTexture;
+				materialData->Specular = material.SpecularTexture;
+				materialData->Normal = material.NormalTexture;
+				materialData->ColorParams = material.OverrideColorTexture;
+			}
+		}
+	}
+
+	void ModelPackageAsset::InstantiateMaterials(std::shared_ptr<Object>& parent)
+	{
+		for (size_t j = 0; j < Package.Materials.size(); ++j)
+		{
+			Graphics::ModelPackageMaterial& material = Package.Materials[j];
+
+			std::shared_ptr<Graphics::DyeablePhongMaterial> materialData = Engine::Create<Graphics::DyeablePhongMaterial>();
+
+			materialData->Albedo = material.DiffuseTexture;
+			materialData->Specular = material.SpecularTexture;
+			materialData->Normal = material.NormalTexture;
+			materialData->ColorParams = material.OverrideColorTexture;
+			materialData->ShaderGroup = material.ShaderGroup;
+
+			material.Material = materialData;
 		}
 	}
 }

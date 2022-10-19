@@ -15,7 +15,7 @@ namespace Engine
 		class Uniform : public DeviceResource
 		{
 		public:
-			Uniform(uint32_t binding) : Binding(binding) {}
+			Uniform(uint32_t binding, uint32_t set) : Binding(binding), Set(set) {}
 
 			virtual size_t GetSize() const { return 0; }
 			virtual vk::DescriptorType GetType() const { return vk::DescriptorType::eMutableVALVE; }
@@ -29,8 +29,10 @@ namespace Engine
 			bool IsStale() const { return Stale; }
 			bool IsWrittenThisFrame() const { return WrittenThisFrame; }
 			uint32_t GetBinding() const { return Binding; }
+			uint32_t GetSet() const { return Set; }
 
 		private:
+			uint32_t Set = 0;
 			uint32_t Binding = 0;
 			bool Stale = false;
 			bool WrittenThisFrame = false;
@@ -41,7 +43,7 @@ namespace Engine
 		class CombinedSamplerUniform : public Uniform
 		{
 		public:
-			CombinedSamplerUniform(uint32_t binding) : Uniform(binding) {}
+			CombinedSamplerUniform(uint32_t binding, uint32_t set) : Uniform(binding, set) {}
 
 			void SetCount(size_t index);
 			void Set(size_t index, const std::shared_ptr<Texture>& texture, vk::ImageLayout layout = vk::ImageLayout::eShaderReadOnlyOptimal);
@@ -57,7 +59,7 @@ namespace Engine
 		class BufferObjectUniform : public Uniform
 		{
 		public:
-			BufferObjectUniform(uint32_t binding);
+			BufferObjectUniform(uint32_t binding, uint32_t set);
 			~BufferObjectUniform();
 
 			struct SceneInfo

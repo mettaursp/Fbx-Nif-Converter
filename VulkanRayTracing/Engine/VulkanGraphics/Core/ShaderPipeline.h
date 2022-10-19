@@ -26,7 +26,15 @@ namespace Engine
 			vk::DescriptorType Type;
 			vk::ShaderStageFlagBits ActiveStages;
 			int Count = 1;
+			size_t DescriptorSetIndex = 0;
+			uint32_t Binding = 0;
 			std::vector<vk::Sampler> ImmutableSamplers;
+		};
+
+		struct DescriptorSetInfo
+		{
+			size_t DescriptorStartIndex = 0;
+			size_t DescriptorCount = 0;
 		};
 
 		struct RenderTargetAttachment
@@ -133,7 +141,7 @@ namespace Engine
 
 			void AddPushConstantValue(Enum::AttributeDataType type, size_t elementCount = 1, size_t columnCount = 1);
 
-			std::shared_ptr<Uniform> AddUniform(vk::DescriptorType type, uint32_t binding);
+			std::shared_ptr<Uniform> AddUniform(vk::DescriptorType type, uint32_t binding, uint32_t set);
 			void FlushUniformChanges();
 			size_t GetUniformCount() const { return Uniforms.size(); }
 
@@ -152,11 +160,12 @@ namespace Engine
 			vk::Pipeline GetPipeline() const { return Pipeline; }
 			vk::PipelineCache GetCache() const { return Cache; }
 			vk::PipelineLayout GetPipelineLayout() const { return PipelineLayout; }
-			const vk::DescriptorSetLayout& GetDescriptorLayout() const { return DescriptorLayout; }
+			const std::vector<vk::DescriptorSetLayout>& GetDescriptorLayouts() const { return DescriptorLayouts; }
 			vk::RenderPass GetRenderPass() const { return RenderPass; }
-			const vk::DescriptorSet& GetDescriptorSet(uint32_t index) const { return DescriptorSets[index]; };
+			const vk::DescriptorSet* GetDescriptorSets() const { return DescriptorSets.data() + (CurrentBuffer * DescriptorSetCount); };
+			size_t GetDescriptorSetCount() const { return DescriptorSetCount; }
 			const std::shared_ptr<MeshFormat>& GetMeshFormat() const { return BoundFormat; }
-			const std::shared_ptr<Uniform> GetUniform(int index) const;
+			const std::shared_ptr<Uniform> GetUniform(int binding, int set) const;
 			size_t GetUniforms() const { return Uniforms.size(); }
 
 			bool HasBindings() const { return InitializedBindings; }
@@ -172,11 +181,13 @@ namespace Engine
 			bool InitializedShaders = false;
 
 			size_t CurrentBuffer = 0;
+			size_t DescriptorSetCount = 0;
 
 			vk::Pipeline Pipeline;
 			vk::PipelineCache Cache;
 			vk::PipelineLayout PipelineLayout;
-			vk::DescriptorSetLayout DescriptorLayout;
+			std::vector<DescriptorSetInfo> DescriptorLayoutInfo;
+			std::vector<vk::DescriptorSetLayout> DescriptorLayouts;
 			vk::RenderPass RenderPass;
 			vk::DescriptorPool DescriptorPool;
 

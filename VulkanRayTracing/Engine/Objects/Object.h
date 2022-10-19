@@ -166,6 +166,8 @@ namespace Engine
 		return std::dynamic_pointer_cast<T>(This.lock());
 	}
 
+	extern std::shared_ptr<Object> Null;
+
 	template <typename T, typename... Arguments>
 	std::shared_ptr<T> Create(Arguments&&... arguments)
 	{

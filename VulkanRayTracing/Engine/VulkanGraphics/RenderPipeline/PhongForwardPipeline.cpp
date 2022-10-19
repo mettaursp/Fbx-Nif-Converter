@@ -12,9 +12,9 @@ namespace Engine
 			std::shared_ptr<Shader> fragShader = AddShader("fragmentShaderTest", vk::ShaderStageFlagBits::eFragment);
 			std::shared_ptr<Shader> vertShader = AddShader("morphAnimation", vk::ShaderStageFlagBits::eVertex);
 
-			Graphics::ShaderBinding uniformBuffer{ vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex, 1 };
-			Graphics::ShaderBinding samplers{ vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 1 };
-			Graphics::ShaderBinding uniformBuffer2{ vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex, 1 };
+			Graphics::ShaderBinding uniformBuffer{ vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex, 1, 0, 0 };
+			Graphics::ShaderBinding samplers{ vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment, 1, 1, 0 };
+			Graphics::ShaderBinding uniformBuffer2{ vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex, 1, 2, 0 };
 
 			AddBinding(uniformBuffer);
 			AddBinding(samplers);
@@ -127,11 +127,14 @@ namespace Engine
 			AddDependency(depthDependency);
 			AddDependency(imageLayoutTransitionDependency);
 
-			std::shared_ptr<CombinedSamplerUniform> sampler = AddUniform(vk::DescriptorType::eCombinedImageSampler, 1)->Cast<Graphics::CombinedSamplerUniform>();
+			std::shared_ptr<BufferObjectUniform> buffer = AddUniform(vk::DescriptorType::eUniformBuffer, 0, 0)->Cast<Graphics::BufferObjectUniform>();
+			buffer->InitializeData();
+
+			std::shared_ptr<CombinedSamplerUniform> sampler = AddUniform(vk::DescriptorType::eCombinedImageSampler, 0, 1)->Cast<Graphics::CombinedSamplerUniform>();
 			sampler->SetCount(1);
 
-			std::shared_ptr<BufferObjectUniform> buffer = AddUniform(vk::DescriptorType::eUniformBuffer, 2)->Cast<Graphics::BufferObjectUniform>();
-			buffer->InitializeData();
+			std::shared_ptr<BufferObjectUniform> buffer2 = AddUniform(vk::DescriptorType::eUniformBuffer, 0, 2)->Cast<Graphics::BufferObjectUniform>();
+			buffer2->InitializeData();
 
 			InitializeDescriptors(3);
 		}

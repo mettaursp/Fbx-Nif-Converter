@@ -1,5 +1,7 @@
 #include "Asset.h"
 
+import <string>;
+
 namespace Engine
 {
 	Asset::~Asset()
@@ -20,7 +22,18 @@ namespace Engine
 
 	void Asset::SetImportPath(const std::string& path)
 	{
-		DirectoryPath = FilePath(path);
+		std::string sanitized = path;
+
+		if (sanitized.size() < 2)
+			sanitized = "./" + sanitized;
+
+		if (sanitized[1] != ':' && !(sanitized[0] == '.' && sanitized[1] == '/'))
+			sanitized = "./" + sanitized;
+
+		if (sanitized[sanitized.size() - 1] != '/' && sanitized[sanitized.size() - 1] != '\\')
+			sanitized += '/';
+
+		DirectoryPath = FilePath(sanitized);
 	}
 
 	void Asset::SetExportPath(const std::string& path)
